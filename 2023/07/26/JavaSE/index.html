@@ -105,7 +105,7 @@
         return item.value
       }
     }
-  
+
     win.getScript = url => new Promise((resolve, reject) => {
       const script = document.createElement('script')
       script.src = url
@@ -119,7 +119,7 @@
       }
       document.head.appendChild(script)
     })
-  
+
     win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
       const link = document.createElement('link')
       link.rel = 'stylesheet'
@@ -134,7 +134,7 @@
       }
       document.head.appendChild(link)
     })
-  
+
       win.activateDarkMode = function () {
         document.documentElement.setAttribute('data-theme', 'dark')
         if (document.querySelector('meta[name="theme-color"]') !== null) {
@@ -148,7 +148,7 @@
         }
       }
       const t = saveToLocal.get('theme')
-    
+
           const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
           const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
           const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
@@ -170,7 +170,7 @@
             })
           } else if (t === 'light') activateLightMode()
           else activateDarkMode()
-        
+
       const asideStatus = saveToLocal.get('aside-status')
       if (asideStatus !== undefined) {
         if (asideStatus === 'hide') {
@@ -179,7 +179,7 @@
           document.documentElement.classList.remove('hide-aside')
         }
       }
-    
+
     const detectApple = () => {
       if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
         document.documentElement.classList.add('apple')
@@ -241,12 +241,12 @@
 <li>指导数据的存储</li>
 <li>分类</li>
 </ul>
-<img src="/2023/07/26/JavaSE/%E5%8F%98%E9%87%8F%E7%B1%BB%E5%9E%8B.png" class="" title="数据类型">
+<img src="/ming--z/2023/07/26/JavaSE/%E5%8F%98%E9%87%8F%E7%B1%BB%E5%9E%8B.png" class="" title="数据类型">
 
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  基本类型</span></span><br><span class="line"><span class="comment">      数值型:  byte int long     float double</span></span><br><span class="line"><span class="comment">      字符型:  char</span></span><br><span class="line"><span class="comment">      布尔型:  true false</span></span><br><span class="line"><span class="comment">  引用类型</span></span><br><span class="line"><span class="comment">      除了八种基本类型以外的</span></span><br><span class="line"><span class="comment">      用一个类名来定义</span></span><br><span class="line"><span class="comment">       String name = &quot;zhangsan&quot;;</span></span><br><span class="line"><span class="comment"> */</span></span><br></pre></td></tr></table></figure>
 
 <h5 id="整数类型"><a href="#整数类型" class="headerlink" title="整数类型"></a>整数类型</h5><p>&#x3D;&#x3D;java中整数字面量为int类型&#x3D;&#x3D;</p>
-<img src="/2023/07/26/JavaSE/%E6%95%B4%E5%BD%A2%E6%95%B0%E6%8D%AE%E7%9A%84%E5%A4%A7%E5%B0%8F.png" class="" title="整数类型">
+<img src="/ming--z/2023/07/26/JavaSE/%E6%95%B4%E5%BD%A2%E6%95%B0%E6%8D%AE%E7%9A%84%E5%A4%A7%E5%B0%8F.png" class="" title="整数类型">
 
 <h5 id="浮点类型"><a href="#浮点类型" class="headerlink" title="浮点类型"></a>浮点类型</h5><p>&#x3D;&#x3D;浮点型字面量为double&#x3D;&#x3D;</p>
 <img src="/2023/07/26/JavaSE/%E6%B5%AE%E7%82%B9%E7%B1%BB%E5%9E%8B.png" class="">
@@ -604,12 +604,12 @@ var pjax = new Pjax({
 
 document.addEventListener('pjax:send', function () {
 
-  // removeEventListener scroll 
+  // removeEventListener scroll
   window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
   window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
 
   document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
-  
+
   if (window.aplayers) {
     for (let i = 0; i < window.aplayers.length; i++) {
       if (!window.aplayers[i].options.fixed) {
