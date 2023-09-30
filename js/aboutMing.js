@@ -13,7 +13,8 @@ function bot_ui_ini(){
 		{text:"然后呢？ 😃",value:"sure"},
 		{text:"少废话！ 🙄",value:"skip"}]})
 	.then(function(a){"sure"==a.value&&sure();"skip"==a.value&&end()})})})});var sure=function(){botui.message.add({delay:800,content:"竟然真对我感兴趣！ 🌹🌹🌹"})
-	.then(function(){secondpart()})},end=function(){botui.message.add({delay:800,content:"![...](https://cdn.jsdelivr.net/gh/XXXZhy/Blog_Image/images/黄狗白眼.webp)"})},secondpart=function(){botui.message.add({delay:1500,content:"现就读陕西理工大学"})
+	.then(function(){secondpart()})},end=function(){botui.message.add({delay:800,content:"![...](https://cdn.jsdelivr.net/gh/XXXZhy/Blog_Image/images/黄狗白眼.webp)"})},secondpart=function(){botui.message.add({delay:1500,content:"现就读于陕西理工大学"})
+	.then(function(){botui.message.add({delay:1500,content:"网络和现实都嘴笨😭😭"})
 	.then(function(){botui.message.add({delay:1500,content:"致力于成为机器人大佬的小萌新😬😬"})
 	.then(function(){botui.message.add({delay:1200,content:"喜欢瞎捣鼓，会因为学到一点儿小技巧高兴，当然主要是比较闷，想从中获取快乐！"})
 	.then(function(){botui.message.add({delay:1500,content:"主要涉及自动驾驶相关的领域"})
