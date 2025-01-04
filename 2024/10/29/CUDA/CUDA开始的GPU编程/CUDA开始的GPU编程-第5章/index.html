@@ -1,0 +1,668 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>CUDA开始的GPU编程-第五章 | MINGの部落格</title><meta name="author" content="Ming"><meta name="copyright" content="Ming"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta name="description" content="第五章：数学运算经典案例，并行地求 sin 值终于可以在GPU上干点正事了(bushi 就让我们在 GPU 上并行地计算从 sin(0) 到 sin(65535) 的值，并填入到数组 arr 中。 123456789101112131415161718192021222324252627282930#include &lt;cuda_runtime.h&gt;#include &lt;cstdio">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CUDA开始的GPU编程-第五章">
+<meta property="og:url" content="https://ming-z0.github.io/2024/10/29/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC5%E7%AB%A0/index.html">
+<meta property="og:site_name" content="MINGの部落格">
+<meta property="og:description" content="第五章：数学运算经典案例，并行地求 sin 值终于可以在GPU上干点正事了(bushi 就让我们在 GPU 上并行地计算从 sin(0) 到 sin(65535) 的值，并填入到数组 arr 中。 123456789101112131415161718192021222324252627282930#include &lt;cuda_runtime.h&gt;#include &lt;cstdio">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg">
+<meta property="article:published_time" content="2024-10-28T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-04T18:26:31.473Z">
+<meta property="article:author" content="Ming">
+<meta property="article:tag" content="CUDA">
+<meta property="article:tag" content="GPU编程">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg"><link rel="shortcut icon" href="/./img/%E5%9B%BE%E6%A0%87/favicon.png"><link rel="canonical" href="https://ming-z0.github.io/2024/10/29/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC5%E7%AB%A0/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "i5biwbw9sk");</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":-1,"unescape":false,"languages":{"hits_empty":"找不到您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":200},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: true
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'mediumZoom',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'CUDA开始的GPU编程-第五章',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-05 02:26:31'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+  window.addEventListener('load',() => { preloader.endLoading() })
+
+  if (true) {
+    document.addEventListener('pjax:send', () => { preloader.initLoading() })
+    document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+  }
+})()</script><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/./img/%E5%A4%B4%E5%83%8F.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">29</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">16</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">9</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 分析</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 统计</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fa fa-user"></i><span> 我的</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 收藏</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1VB4y137ys/"><i class="fa-fw fas fa-heart"></i><span> ROS2理论与实践</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1if4y147hS/"><i class="fa-fw fas fa-heart"></i><span> 动手学深度学习</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://geek-logic.com/"><i class="fa-fw fas fa-heart"></i><span> Geek Logic</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://github.com/parallel101/cppguidebook"><i class="fa-fw fas fa-heart"></i><span> 小彭老师C++大典</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url('/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="MINGの部落格"><span class="site-name">MINGの部落格</span></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 分析</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 统计</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fa fa-user"></i><span> 我的</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 收藏</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1VB4y137ys/"><i class="fa-fw fas fa-heart"></i><span> ROS2理论与实践</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1if4y147hS/"><i class="fa-fw fas fa-heart"></i><span> 动手学深度学习</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://geek-logic.com/"><i class="fa-fw fas fa-heart"></i><span> Geek Logic</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://github.com/parallel101/cppguidebook"><i class="fa-fw fas fa-heart"></i><span> 小彭老师C++大典</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">CUDA开始的GPU编程-第五章</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-10-28T16:00:00.000Z" title="发表于 2024-10-29 00:00:00">2024-10-29</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-01-04T18:26:31.473Z" title="更新于 2025-01-05 02:26:31">2025-01-05</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GPU%E7%BC%96%E7%A8%8B/">GPU编程</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">2.1k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>9分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="CUDA开始的GPU编程-第五章"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="第五章：数学运算"><a href="#第五章：数学运算" class="headerlink" title="第五章：数学运算"></a>第五章：数学运算</h2><h3 id="经典案例，并行地求-sin-值"><a href="#经典案例，并行地求-sin-值" class="headerlink" title="经典案例，并行地求 sin 值"></a>经典案例，并行地求 sin 值</h3><p><em>终于可以在GPU上干点正事了(bushi</em></p>
+<p>就让我们在 GPU 上并行地计算从 sin(0) 到 sin(65535) 的值，并填入到数组 arr 中。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cuda_runtime.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdio&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;CudaAllocator.h&quot;</span>  <span class="comment">// 封装刚才的内存分配器</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;helper_cuda.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">Func</span>&gt;</span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">parallel_for</span><span class="params">(<span class="type">int</span> n, Func func)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = blockDim.x * blockIdx.x + threadIdx.x; i &lt; n;</span><br><span class="line">       i += blockDim.x * gridDim.x) &#123;</span><br><span class="line">    <span class="built_in">func</span>(i);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="type">int</span> n = <span class="number">65536</span>;</span><br><span class="line">  std::vector&lt;<span class="type">float</span>, CudaAllocator&lt;<span class="type">float</span>&gt;&gt; <span class="built_in">arr</span>(n);</span><br><span class="line"></span><br><span class="line">  parallel_for&lt;&lt;&lt;<span class="number">32</span>, <span class="number">128</span>&gt;&gt;&gt;(</span><br><span class="line">      n, [arr = arr.<span class="built_in">data</span>()] __device__(<span class="type">int</span> i) &#123; arr[i] = <span class="built_in">sinf</span>(i); &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="built_in">checkCudaErrors</span>(<span class="built_in">cudaDeviceSynchronize</span>());</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;diff %d = %f\n&quot;</span>, i, arr[i] - <span class="built_in">sinf</span>(i));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>这里为什么用 sinf 而不是 sin？</p>
+</li>
+<li><p>因为 sin 是 double 类型的正弦函数，而我们需要的 sinf 是 float 类型的正弦函数。</p>
+</li>
+<li><p>可不要偷懒少打一个 f 哦，否则计算过程需要对数据类型进行转换，影响性能。</p>
+</li>
+</ul>
+<p>完成同步之后，和 CPU 算出来的比较差值，看看 GPU 算的是否准确无误，从右边的输出可以看到基本是一致的。</p>
+<img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/2024/10/29/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC5%E7%AB%A0/Clip_2024-11-06_23-25-46.png" class="" title="Clip_2024-11-06_23-25-46">
+
+<h3 id="测试一下时间"><a href="#测试一下时间" class="headerlink" title="测试一下时间"></a>测试一下时间</h3><p>提供一个小工具：ticktock.h</p>
+<p>可以用来打印 CPU 和 GPU的用时</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> once</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;chrono&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> __ycm__</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> TICK(x) auto bench_##x = std::chrono::steady_clock::now();</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> TOCK(x)                                                     \</span></span><br><span class="line"><span class="meta">  printf(<span class="string">&quot;%s: %lfs\n&quot;</span>, #x,                                          \</span></span><br><span class="line"><span class="meta">         std::chrono::duration_cast<span class="string">&lt;std::chrono::duration&lt;double&gt;</span>&gt;( \</span></span><br><span class="line"><span class="meta">             std::chrono::steady_clock::now() - bench_##x)          \</span></span><br><span class="line"><span class="meta">             .count());</span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> TICK(x)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> TOCK(x)</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p><strong>注意</strong>，这里一定要把 TOCK 放到同步之后。原因之前说过，因为对 GPU 核函数的调用是异步的，只有 cudaDeviceSynchronize() 以后才真正完成执行，才能算出真的时间。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cuda_runtime.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdio&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;CudaAllocator.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;helper_cuda.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;ticktock.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">Func</span>&gt;</span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">parallel_for</span><span class="params">(<span class="type">int</span> n, Func func)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = blockDim.x * blockIdx.x + threadIdx.x; i &lt; n;</span><br><span class="line">       i += blockDim.x * gridDim.x) &#123;</span><br><span class="line">    <span class="built_in">func</span>(i);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="type">int</span> n = <span class="number">1</span> &lt;&lt; <span class="number">25</span>;</span><br><span class="line">  std::vector&lt;<span class="type">float</span>, CudaAllocator&lt;<span class="type">float</span>&gt;&gt; <span class="built_in">gpu</span>(n);</span><br><span class="line">  <span class="function">std::vector&lt;<span class="type">float</span>&gt; <span class="title">cpu</span><span class="params">(n)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">TICK</span>(cpu_sinf);  <span class="comment">// cpu开始时间</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) &#123;</span><br><span class="line">    cpu[i] = <span class="built_in">sinf</span>(i);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">TOCK</span>(cpu_sinf);  <span class="comment">// cpu结束时间</span></span><br><span class="line"></span><br><span class="line">  <span class="built_in">TICK</span>(gpu_sinf);  <span class="comment">// gpu开始时间</span></span><br><span class="line">  parallel_for&lt;&lt;&lt;n / <span class="number">512</span>, <span class="number">128</span>&gt;&gt;&gt;(</span><br><span class="line">      n, [gpu = gpu.<span class="built_in">data</span>()] __device__(<span class="type">int</span> i) &#123; gpu[i] = <span class="built_in">sinf</span>(i); &#125;);</span><br><span class="line">  <span class="built_in">checkCudaErrors</span>(<span class="built_in">cudaDeviceSynchronize</span>());</span><br><span class="line">  <span class="built_in">TOCK</span>(gpu_sinf);  <span class="comment">// gpu结束时间 注意放在GPU同步之后</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// for (int i = 0; i &lt; n; i++) &#123;</span></span><br><span class="line">  <span class="comment">// printf(&quot;diff %d = %f\n&quot;, i, gpu[i] - cpu[i]);</span></span><br><span class="line">  <span class="comment">//&#125;</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// cpu_sinf: 0.119689s</span></span><br><span class="line"><span class="comment">// gpu_sinf : 0.034462s</span></span><br></pre></td></tr></table></figure>
+
+<p>查看结果，发现 GPU 比 CPU 快了很多，这是当然的。</p>
+<ul>
+<li>有时候可能出现GPU比CPU慢很多，或者两次运行GPU速度差距很大</li>
+<li>这是因为GPU初始化需要准备一些资源，第二次启动时就不需要了</li>
+<li>所以有时会看到，大佬会先空调用一下GPU，之后再执行任务。</li>
+</ul>
+<p>适当调整板块数量 gridDim 和每板块的线程数量 blockDim，还可以更快一些。可以自己调调看，这里我们就不浪费篇幅了。</p>
+<p>顺便一提，这样的数学函数还有 ：</p>
+<table>
+<thead>
+<tr>
+<th><strong>函数</strong></th>
+<th><strong>简要功能</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>sqrtf(x)</code></td>
+<td>返回 <code>x</code> 的平方根。</td>
+</tr>
+<tr>
+<td><code>rsqrtf(x)</code></td>
+<td>返回 <code>x</code> 的倒数平方根，即 <code>1/sqrtf(x)</code>。</td>
+</tr>
+<tr>
+<td><code>cbrtf(x)</code></td>
+<td>返回 <code>x</code> 的立方根。</td>
+</tr>
+<tr>
+<td><code>rcbrtf(x)</code></td>
+<td>返回 <code>x</code> 的倒数立方根，即 <code>1/cbrtf(x)</code>。</td>
+</tr>
+<tr>
+<td><code>powf(x, y)</code></td>
+<td>返回 <code>x</code> 的 <code>y</code> 次幂（<code>x^y</code>）。</td>
+</tr>
+<tr>
+<td><code>sinf(x)</code></td>
+<td>返回 <code>x</code> 的正弦值，<code>x</code> 为弧度制。</td>
+</tr>
+<tr>
+<td><code>cosf(x)</code></td>
+<td>返回 <code>x</code> 的余弦值，<code>x</code> 为弧度制。</td>
+</tr>
+<tr>
+<td><code>sinpif(x)</code></td>
+<td>返回 <code>x * pi</code> 的正弦值，<code>x</code> 为倍数。</td>
+</tr>
+<tr>
+<td><code>cospif(x)</code></td>
+<td>返回 <code>x * pi</code> 的余弦值，<code>x</code> 为倍数。</td>
+</tr>
+<tr>
+<td><code>sincosf(x)</code></td>
+<td>返回一个结构体，包含 <code>x</code> 的正弦值和余弦值，<code>x</code> 为弧度制。</td>
+</tr>
+<tr>
+<td><code>sincospif(x)</code></td>
+<td>返回一个结构体，包含 <code>x * pi</code> 的正弦值和余弦值，<code>x</code> 为倍数。</td>
+</tr>
+<tr>
+<td><code>logf(x)</code></td>
+<td>返回 <code>x</code> 的自然对数（以 <code>e</code> 为底）。</td>
+</tr>
+<tr>
+<td><code>log2f(x)</code></td>
+<td>返回 <code>x</code> 的以 2 为底的对数。</td>
+</tr>
+<tr>
+<td><code>log10f(x)</code></td>
+<td>返回 <code>x</code> 的以 10 为底的对数。</td>
+</tr>
+<tr>
+<td><code>expf(x)</code></td>
+<td>返回 <code>e^x</code>，即 <code>e</code> 的 <code>x</code> 次幂。</td>
+</tr>
+<tr>
+<td><code>exp2f(x)</code></td>
+<td>返回 <code>2^x</code>，即 2 的 <code>x</code> 次幂。</td>
+</tr>
+<tr>
+<td><code>exp10f(x)</code></td>
+<td>返回 <code>10^x</code>，即 10 的 <code>x</code> 次幂。</td>
+</tr>
+<tr>
+<td><code>tanf(x)</code></td>
+<td>返回 <code>x</code> 的正切值，<code>x</code> 为弧度制。</td>
+</tr>
+<tr>
+<td><code>atanf(x)</code></td>
+<td>返回 <code>x</code> 的反正切值（<code>arctan(x)</code>），返回结果是弧度制。</td>
+</tr>
+<tr>
+<td><code>asinf(x)</code></td>
+<td>返回 <code>x</code> 的反正弦值（<code>arcsin(x)</code>），返回结果是弧度制。</td>
+</tr>
+<tr>
+<td><code>acosf(x)</code></td>
+<td>返回 <code>x</code> 的反余弦值（<code>arccos(x)</code>），返回结果是弧度制。</td>
+</tr>
+<tr>
+<td><code>fmodf(x, y)</code></td>
+<td>返回 <code>x</code> 除以 <code>y</code> 后的余数。</td>
+</tr>
+<tr>
+<td><code>fabsf(x)</code></td>
+<td>返回 <code>x</code> 的绝对值。</td>
+</tr>
+<tr>
+<td><code>fminf(x, y)</code></td>
+<td>返回 <code>x</code> 和 <code>y</code> 中的较小值。</td>
+</tr>
+<tr>
+<td><code>fmaxf(x, y)</code></td>
+<td>返回 <code>x</code> 和 <code>y</code> 中的较大值。</td>
+</tr>
+</tbody></table>
+<p>功能总结：</p>
+<ul>
+<li><strong>平方根与幂</strong>：<code>sqrtf</code>、<code>rsqrtf</code>、<code>cbrtf</code>、<code>rcbrtf</code>、<code>powf</code> 等用于计算数值的平方根、倒数平方根、立方根、倒数立方根和幂。</li>
+<li><strong>三角函数</strong>：<code>sinf</code>、<code>cosf</code>、<code>sinpif</code>、<code>cospif</code>、<code>sincosf</code>、<code>sincospif</code> 计算正弦、余弦、及其在 π 倍数上的变种。</li>
+<li><strong>对数与指数函数</strong>：<code>logf</code>、<code>log2f</code>、<code>log10f</code>、<code>expf</code>、<code>exp2f</code>、<code>exp10f</code> 用于自然对数、以 2 或 10 为底的对数，及对应的指数运算。</li>
+<li><strong>反三角函数</strong>：<code>atanf</code>、<code>asinf</code>、<code>acosf</code> 返回反正切、反正弦、反余弦函数的值。</li>
+<li><strong>数学常用操作</strong>：<code>fmodf</code> 用于取余，<code>fabsf</code> 返回绝对值，<code>fminf</code> 和 <code>fmaxf</code> 用于选择最小值和最大值。</li>
+</ul>
+<h3 id="稍快，但不完全精确的-sinf"><a href="#稍快，但不完全精确的-sinf" class="headerlink" title="稍快，但不完全精确的 __sinf"></a>稍快，但不完全精确的 <code>__sinf</code></h3><p>两个下划线的 __sinf 是 GPU intrinstics，精度相当于 GLSL 里的那种。适合对精度要求不高，但有性能要求的图形学任务。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cuda_runtime.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdio&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;CudaAllocator.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;helper_cuda.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;ticktock.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">Func</span>&gt;</span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">parallel_for</span><span class="params">(<span class="type">int</span> n, Func func)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = blockDim.x * blockIdx.x + threadIdx.x; i &lt; n;</span><br><span class="line">       i += blockDim.x * gridDim.x) &#123;</span><br><span class="line">    <span class="built_in">func</span>(i);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="type">int</span> n = <span class="number">1</span> &lt;&lt; <span class="number">25</span>;</span><br><span class="line">  std::vector&lt;<span class="type">float</span>, CudaAllocator&lt;<span class="type">float</span>&gt;&gt; <span class="built_in">gpu</span>(n);</span><br><span class="line">  <span class="function">std::vector&lt;<span class="type">float</span>&gt; <span class="title">cpu</span><span class="params">(n)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">TICK</span>(cpu_sinf);</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) &#123;</span><br><span class="line">    cpu[i] = <span class="built_in">sinf</span>(i);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">TOCK</span>(cpu_sinf);</span><br><span class="line"></span><br><span class="line">  <span class="built_in">TICK</span>(gpu_sinf);</span><br><span class="line">  parallel_for&lt;&lt;&lt;n / <span class="number">512</span>, <span class="number">128</span>&gt;&gt;&gt;(</span><br><span class="line">      n, [gpu = gpu.<span class="built_in">data</span>()] __device__(<span class="type">int</span> i) &#123; gpu[i] = __sinf(i); &#125;);</span><br><span class="line">  <span class="built_in">checkCudaErrors</span>(<span class="built_in">cudaDeviceSynchronize</span>());</span><br><span class="line">  <span class="built_in">TOCK</span>(gpu_sinf);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// for (int i = 0; i &lt; n; i++) &#123;</span></span><br><span class="line">  <span class="comment">// printf(&quot;diff %d = %f\n&quot;, i, gpu[i] - cpu[i]);</span></span><br><span class="line">  <span class="comment">//&#125;</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// cpu_sinf: 0.118834s</span></span><br><span class="line"><span class="comment">// gpu_sinf: 0.026515s</span></span><br></pre></td></tr></table></figure>
+
+<img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/2024/10/29/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC5%E7%AB%A0/Clip_2024-11-07_00-46-35.png" class="" title="Clip_2024-11-07_00-46-35">
+
+<p>类似的低精度内建函数还有 <code>__expf</code>、<code>__logf</code>、<code>__cosf</code>、<code>__powf</code> 等.</p>
+<p>另外，<code>__fdividef(x, y)</code> 是一个专门用于浮点除法的优化函数，它提供与常规除法相同的精度，且计算速度更快。然而，当 <code>y</code> 的值位于 <code>2^216</code> 到 <code>2^218</code> 之间时，可能会返回错误的结果，因此在使用时需要避免该数值范围。</p>
+<img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/2024/10/29/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC5%E7%AB%A0/Clip_2024-11-07_00-56-06.png" class="" title="Clip_2024-11-07_00-56-06">
+
+<h3 id="编译器选项：-use-fast-math"><a href="#编译器选项：-use-fast-math" class="headerlink" title="编译器选项：--use_fast_math"></a>编译器选项：<code>--use_fast_math</code></h3><p>启用 <code>--use_fast_math</code> 选项时，编译器会对多个数学操作进行优化以提升性能，具体包括：</p>
+<ul>
+<li><strong><code>sinf</code> 调用优化</strong>：所有对 <code>sinf</code> 的调用会自动替换为 <code>__sinf</code>，以使用更快的实现。</li>
+<li>**<code>--ftz=true</code>**：将极小数（非规格化数，denormal）视为 0，从而避免额外的处理开销，提高运算速度。</li>
+<li>**<code>--prec-div=false</code>**：降低除法运算的精度，换取更快的计算速度。</li>
+<li>**<code>--prec-sqrt=false</code>**：降低平方根运算的精度，提升运算速度。</li>
+<li>**<code>--fmad</code>**：启用浮点数乘加指令（FMA），将表达式 <code>a * b + c</code> 自动优化为更高效的乘加指令。此选项默认开启，因其对性能影响显著。</li>
+</ul>
+<p>开启 <code>--use_fast_math</code> 后，以上所有优化选项将自动启用。</p>
+<h3 id="SAXPY（Scalar-A-times-X-Plus-Y）"><a href="#SAXPY（Scalar-A-times-X-Plus-Y）" class="headerlink" title="SAXPY（Scalar A times X Plus Y）"></a>SAXPY（Scalar A times X Plus Y）</h3><p>即标量 A 乘 X 加 Y</p>
+<p>这是很多CUDA教科书中的“Hello, world”，我们这里也来实现一下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cuda_runtime.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdio&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;CudaAllocator.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;helper_cuda.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">Func</span>&gt;</span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">parallel_for</span><span class="params">(<span class="type">int</span> n, Func func)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = blockDim.x * blockIdx.x + threadIdx.x; i &lt; n;</span><br><span class="line">       i += blockDim.x * gridDim.x) &#123;</span><br><span class="line">    <span class="built_in">func</span>(i);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="type">int</span> n = <span class="number">65536</span>;</span><br><span class="line">  <span class="type">float</span> a = <span class="number">3.14f</span>;</span><br><span class="line">  std::vector&lt;<span class="type">float</span>, CudaAllocator&lt;<span class="type">float</span>&gt;&gt; <span class="built_in">x</span>(n);</span><br><span class="line">  std::vector&lt;<span class="type">float</span>, CudaAllocator&lt;<span class="type">float</span>&gt;&gt; <span class="built_in">y</span>(n);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) &#123;</span><br><span class="line">    x[i] = std::<span class="built_in">rand</span>() * (<span class="number">1.f</span> / RAND_MAX);</span><br><span class="line">    y[i] = std::<span class="built_in">rand</span>() * (<span class="number">1.f</span> / RAND_MAX);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  parallel_for&lt;&lt;&lt;n / <span class="number">512</span>, <span class="number">128</span>&gt;&gt;&gt;(</span><br><span class="line">      n, [a, x = x.<span class="built_in">data</span>(), y = y.<span class="built_in">data</span>()] __device__(<span class="type">int</span> i) &#123;</span><br><span class="line">        x[i] = a * x[i] + y[i];  <span class="comment">// 乘加操作</span></span><br><span class="line">      &#125;);</span><br><span class="line">  <span class="built_in">checkCudaErrors</span>(<span class="built_in">cudaDeviceSynchronize</span>());</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;x[%d] = %f\n&quot;</span>, i, x[i]);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://ming-z0.github.io">Ming</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://ming-z0.github.io/2024/10/29/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC5%E7%AB%A0/">https://ming-z0.github.io/2024/10/29/CUDA/CUDA开始的GPU编程/CUDA开始的GPU编程-第5章/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://ming-z0.github.io" target="_blank">MINGの部落格</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/CUDA/">CUDA</a><a class="post-meta__tags" href="/tags/GPU%E7%BC%96%E7%A8%8B/">GPU编程</a></div><div class="post_share"><div class="social-share" data-image="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/%E6%89%93%E8%B5%8F/wechat.jpg" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/%E6%89%93%E8%B5%8F/wechat.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/10/28/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC4%E7%AB%A0/" title="CUDA开始的GPU编程-第四章"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/6.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">CUDA开始的GPU编程-第四章</div></div></a></div><div class="next-post pull-right"><a href="/2024/10/29/CUDA/%E6%80%A5%E9%80%9F%E6%90%AD%E5%BB%BACUDA%E4%BD%93%E9%AA%8C%E7%8E%AF%E5%A2%83/" title="WSL2快速搭建CUDA体验环境"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/1.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">WSL2快速搭建CUDA体验环境</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2024/10/29/CUDA/%E6%80%A5%E9%80%9F%E6%90%AD%E5%BB%BACUDA%E4%BD%93%E9%AA%8C%E7%8E%AF%E5%A2%83/" title="WSL2快速搭建CUDA体验环境"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/1.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="fas fa-history fa-fw"></i> 2024-11-09</div><div class="title">WSL2快速搭建CUDA体验环境</div></div></a></div><div><a href="/2024/10/24/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC0%E7%AB%A0/" title="CUDA开始的GPU编程-第0章"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/4.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="fas fa-history fa-fw"></i> 2025-01-05</div><div class="title">CUDA开始的GPU编程-第0章</div></div></a></div><div><a href="/2024/10/25/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC1%E7%AB%A0/" title="CUDA开始的GPU编程-第一章"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/4.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="fas fa-history fa-fw"></i> 2025-01-05</div><div class="title">CUDA开始的GPU编程-第一章</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Twikoo</span><span class="switch-btn"></span><span class="second-comment">Livere</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div><div><div id="lv-container" data-id="city" data-uid="MTAyMC82MDIzOS8zNjcwNw"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/./img/%E5%A4%B4%E5%83%8F.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Ming</div><div class="author-info__description">一个记录、分享自己学习过程的博客</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">29</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">16</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">9</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/ming-z0"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/ming-z0" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:ming-zhanglu@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%BA%94%E7%AB%A0%EF%BC%9A%E6%95%B0%E5%AD%A6%E8%BF%90%E7%AE%97"><span class="toc-text">第五章：数学运算</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%8F%E5%85%B8%E6%A1%88%E4%BE%8B%EF%BC%8C%E5%B9%B6%E8%A1%8C%E5%9C%B0%E6%B1%82-sin-%E5%80%BC"><span class="toc-text">经典案例，并行地求 sin 值</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E4%B8%80%E4%B8%8B%E6%97%B6%E9%97%B4"><span class="toc-text">测试一下时间</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A8%8D%E5%BF%AB%EF%BC%8C%E4%BD%86%E4%B8%8D%E5%AE%8C%E5%85%A8%E7%B2%BE%E7%A1%AE%E7%9A%84-sinf"><span class="toc-text">稍快，但不完全精确的 __sinf</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%96%E8%AF%91%E5%99%A8%E9%80%89%E9%A1%B9%EF%BC%9A-use-fast-math"><span class="toc-text">编译器选项：--use_fast_math</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SAXPY%EF%BC%88Scalar-A-times-X-Plus-Y%EF%BC%89"><span class="toc-text">SAXPY（Scalar A times X Plus Y）</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/11/01/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC8%E7%AB%A0/" title="CUDA开始的GPU编程-第八章"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/1.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CUDA开始的GPU编程-第八章"/></a><div class="content"><a class="title" href="/2024/11/01/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC8%E7%AB%A0/" title="CUDA开始的GPU编程-第八章">CUDA开始的GPU编程-第八章</a><time datetime="2025-01-04T18:28:45.782Z" title="更新于 2025-01-05 02:28:45">2025-01-05</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/10/31/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC7%E7%AB%A0/" title="CUDA开始的GPU编程-第七章"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/1.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CUDA开始的GPU编程-第七章"/></a><div class="content"><a class="title" href="/2024/10/31/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC7%E7%AB%A0/" title="CUDA开始的GPU编程-第七章">CUDA开始的GPU编程-第七章</a><time datetime="2025-01-04T18:28:08.650Z" title="更新于 2025-01-05 02:28:08">2025-01-05</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg')"><div id="footer-wrap"><div class="copyright">&copy;2023 - 2025 By Ming</div><div class="footer_custom_text">Hi, 欢迎你来！</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat-btn" type="button" title="聊天"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/medium-zoom/dist/medium-zoom.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><div class="js-pjax"><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script><script>function loadLivere () {
+  if (typeof LivereTower === 'object') {
+    window.LivereTower.init()
+  }
+  else {
+    (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+    })(document, 'script');
+  }
+}
+
+if ('Twikoo' === 'Livere' || !true) {
+  if (true) btf.loadComment(document.getElementById('lv-container'), loadLivere)
+  else loadLivere()
+}
+else {
+  function loadOtherComment () {
+    loadLivere()
+  }
+}</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[图片]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[链接]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[代码]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "无法获取评论，请确认相关配置是否正确"
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'data-lazy-src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += '没有评论'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="12875524711" data-server="netease" data-type="playlist" data-fixed="true" data-mini="true" data-volume="0.4" data-order="random" data-autoplay="true"> </div><script id="canvas_nest" defer="defer" color="97,255,145" opacity="0.7" zIndex="-1" count="88" mobile="true" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-nest.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script>(() => {
+  window.$crisp = [];
+  window.CRISP_WEBSITE_ID = "b178ba69-5256-414b-adab-10306c2edf59";
+  (function () {
+    d = document;
+    s = d.createElement("script");
+    s.src = "https://client.crisp.chat/l.js";
+    s.async = 1;
+    d.getElementsByTagName("head")[0].appendChild(s);
+  })();
+  $crisp.push(["safe", true])
+
+  const isChatBtn = true
+  const isChatHideShow = true
+
+  if (isChatBtn) {
+    const open = () => {
+      $crisp.push(["do", "chat:show"])
+      $crisp.push(["do", "chat:open"])
+    }
+
+    const close = () => {
+      $crisp.push(["do", "chat:hide"])
+    }
+
+    close()
+    $crisp.push(["on", "chat:closed", function() {
+      close()
+    }])
+
+    window.chatBtnFn = () => {
+      $crisp.is("chat:visible") ? close() : open()
+    }
+  } else if (isChatHideShow) {
+    window.chatBtn = {
+      hide: () => {
+        $crisp.push(["do", "chat:hide"])
+      },
+      show: () => {
+        $crisp.push(["do", "chat:show"])
+      }
+    }
+  }
+})()</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["meta[property=\"og:image\"]","meta[property=\"og:title\"]","meta[property=\"og:url\"]","head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"]):not([href="/music/"]):not([href="/no-pjax/"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div class="no-result" id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
