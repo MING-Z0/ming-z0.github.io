@@ -87,9 +87,9 @@
       
         <tags>
             
-            <tag> 协程 </tag>
-            
             <tag> C++ </tag>
+            
+            <tag> 协程 </tag>
             
         </tags>
       
@@ -305,11 +305,11 @@
             
             <tag> 开发环境 </tag>
             
-            <tag> 并行编程 </tag>
-            
             <tag> CUDA </tag>
             
             <tag> GPU编程 </tag>
+            
+            <tag> 并行编程 </tag>
             
         </tags>
       
@@ -612,9 +612,9 @@
       
         <tags>
             
-            <tag> C++ </tag>
-            
             <tag> CMake </tag>
+            
+            <tag> C++ </tag>
             
         </tags>
       
