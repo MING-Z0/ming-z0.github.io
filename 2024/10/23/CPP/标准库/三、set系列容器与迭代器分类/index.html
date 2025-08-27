@@ -1,192 +1,213 @@
-<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>全面理解STL-set系列容器与迭代器分类 | MINGの部落格</title><meta name="author" content="Ming"><meta name="copyright" content="Ming"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta name="description" content="迭代器的分类   迭代器类型 描述 提供的运算符重载 具有此迭代器的容器 相应的 C++20 concept    输入迭代器 只读访问序列，允许单次读取每个元素 *（可读取），!&#x3D;，&#x3D;&#x3D;，++（一次性） istream_iterator input_iterator   输出迭代器 只写访问序列，允许将数据写入到序列中 *（可写入），!&#x3D;，&#x3D;&amp;#">
-<meta property="og:type" content="article">
-<meta property="og:title" content="全面理解STL-set系列容器与迭代器分类">
-<meta property="og:url" content="https://ming-z0.github.io/2024/10/23/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%B8%89%E3%80%81set%E7%B3%BB%E5%88%97%E5%AE%B9%E5%99%A8%E4%B8%8E%E8%BF%AD%E4%BB%A3%E5%99%A8%E5%88%86%E7%B1%BB/index.html">
-<meta property="og:site_name" content="MINGの部落格">
-<meta property="og:description" content="迭代器的分类   迭代器类型 描述 提供的运算符重载 具有此迭代器的容器 相应的 C++20 concept    输入迭代器 只读访问序列，允许单次读取每个元素 *（可读取），!&#x3D;，&#x3D;&#x3D;，++（一次性） istream_iterator input_iterator   输出迭代器 只写访问序列，允许将数据写入到序列中 *（可写入），!&#x3D;，&#x3D;&amp;#">
-<meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/1.jpg">
-<meta property="article:published_time" content="2024-10-22T16:00:00.000Z">
-<meta property="article:modified_time" content="2025-01-13T13:58:34.835Z">
-<meta property="article:author" content="Ming">
-<meta property="article:tag" content="C++">
-<meta property="article:tag" content="STL">
-<meta property="article:tag" content="开发语言">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/1.jpg"><script type="application/ld+json">{
-  "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  "headline": "全面理解STL-set系列容器与迭代器分类",
-  "url": "https://ming-z0.github.io/2024/10/23/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%B8%89%E3%80%81set%E7%B3%BB%E5%88%97%E5%AE%B9%E5%99%A8%E4%B8%8E%E8%BF%AD%E4%BB%A3%E5%99%A8%E5%88%86%E7%B1%BB/",
-  "image": "https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/1.jpg",
-  "datePublished": "2024-10-22T16:00:00.000Z",
-  "dateModified": "2025-01-13T13:58:34.835Z",
-  "author": [
-    {
-      "@type": "Person",
-      "name": "Ming",
-      "url": "https://ming-z0.github.io"
-    }
-  ]
-}</script><link rel="shortcut icon" href="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg"><link rel="canonical" href="https://ming-z0.github.io/2024/10/23/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%B8%89%E3%80%81set%E7%B3%BB%E5%88%97%E5%AE%B9%E5%99%A8%E4%B8%8E%E8%BF%AD%E4%BB%A3%E5%99%A8%E5%88%86%E7%B1%BB/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
-    (() => {
-      
-    const saveToLocal = {
-      set: (key, value, ttl) => {
-        if (!ttl) return
-        const expiry = Date.now() + ttl * 86400000
-        localStorage.setItem(key, JSON.stringify({ value, expiry }))
-      },
-      get: key => {
-        const itemStr = localStorage.getItem(key)
-        if (!itemStr) return undefined
-        const { value, expiry } = JSON.parse(itemStr)
-        if (Date.now() > expiry) {
-          localStorage.removeItem(key)
-          return undefined
-        }
-        return value
-      }
-    }
-
-    window.btf = {
-      saveToLocal,
-      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
-        const script = document.createElement('script')
-        script.src = url
-        script.async = true
-        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
-        script.onload = script.onreadystatechange = () => {
-          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
-        }
-        script.onerror = reject
-        document.head.appendChild(script)
-      }),
-      getCSS: (url, id) => new Promise((resolve, reject) => {
-        const link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = url
-        if (id) link.id = id
-        link.onload = link.onreadystatechange = () => {
-          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
-        }
-        link.onerror = reject
-        document.head.appendChild(link)
-      }),
-      addGlobalFn: (key, fn, name = false, parent = window) => {
-        if (!true && key.startsWith('pjax')) return
-        const globalFn = parent.globalFn || {}
-        globalFn[key] = globalFn[key] || {}
-        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
-        parent.globalFn = globalFn
-      }
-    }
-  
-      
-      const activateDarkMode = () => {
-        document.documentElement.setAttribute('data-theme', 'dark')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
-        }
-      }
-      const activateLightMode = () => {
-        document.documentElement.setAttribute('data-theme', 'light')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
-        }
-      }
-
-      btf.activateDarkMode = activateDarkMode
-      btf.activateLightMode = activateLightMode
-
-      const theme = saveToLocal.get('theme')
-    
-          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
-        
-      
-      const asideStatus = saveToLocal.get('aside-status')
-      if (asideStatus !== undefined) {
-        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
-      }
-    
-      
-    const detectApple = () => {
-      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
-        document.documentElement.classList.add('apple')
-      }
-    }
-    detectApple()
-  
-    })()
-  </script><script>(function(c,l,a,r,i,t,y){
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>全面理解STL-set系列容器与迭代器分类 | MINGの部落格</title><meta name="keywords" content="CPP,STL,开发语言"><meta name="author" content="Ming"><meta name="copyright" content="Ming"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="全面理解STL-set系列容器与迭代器分类"><meta name="application-name" content="全面理解STL-set系列容器与迭代器分类"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="全面理解STL-set系列容器与迭代器分类"><meta property="og:url" content="https://ming-z0.github.io/2024/10/23/CPP/标准库/三、set系列容器与迭代器分类/index.html"><meta property="og:site_name" content="MINGの部落格"><meta property="og:description" content="迭代器的分类   迭代器类型 描述 提供的运算符重载 具有此迭代器的容器 相应的 C++20 concept    输入迭代器 只读访问序列，允许单次读取每个元素 *（可读取），!&amp;#x3D;，&amp;#x3D;&amp;#x3D;，++（一次性） istream_iterator input_iterator"><meta property="og:locale" content="zh-CN"><meta property="og:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/4.jpg"><meta property="article:author" content="Ming"><meta property="article:tag" content=" "><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/4.jpg"><meta name="description" content="迭代器的分类   迭代器类型 描述 提供的运算符重载 具有此迭代器的容器 相应的 C++20 concept    输入迭代器 只读访问序列，允许单次读取每个元素 *（可读取），!&amp;#x3D;，&amp;#x3D;&amp;#x3D;，++（一次性） istream_iterator input_iterator"><link rel="shortcut icon" href="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg"><link rel="canonical" href="https://ming-z0.github.io/2024/10/23/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%B8%89%E3%80%81set%E7%B3%BB%E5%88%97%E5%AE%B9%E5%99%A8%E4%B8%8E%E8%BF%AD%E4%BB%A3%E5%99%A8%E5%88%86%E7%B1%BB/"><link rel="preconnect" href="//cdn.cbd.int"/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.28/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/swiper/swiper.min.css" media="print" onload="this.media='all'"><script>(function(c,l,a,r,i,t,y){
     c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
     t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
     y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 })(window, document, "clarity", "script", "i5biwbw9sk");</script><script>const GLOBAL_CONFIG = {
+  linkPageTop: {"enable":true,"title":"无限进步","addFriendPlaceholder":"昵称（请勿包含博客等字样）：\n网站地址（要求博客地址，请勿提交个人主页）：\n头像图片url（请提供尽可能清晰的图片，我会上传到我自己的图床）：\n描述：\n站点截图（可选）：\n"},
+  peoplecanvas: undefined,
+  postHeadAiDescription: undefined,
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: {"enable":true,"default":"晚上好👋","list":[{"greeting":"晚安😴","startTime":0,"endTime":5},{"greeting":"早上好鸭👋, 祝你一天好心情！","startTime":6,"endTime":9},{"greeting":"上午好👋, 状态很好，鼓励一下～","startTime":10,"endTime":10},{"greeting":"11点多啦, 在坚持一下就吃饭啦～","startTime":11,"endTime":11},{"greeting":"午安👋, 休息休息吧！","startTime":12,"endTime":14},{"greeting":"🌈充实的一天辛苦啦！","startTime":14,"endTime":18},{"greeting":"19点喽, 奖励一顿丰盛的大餐吧🍔。","startTime":19,"endTime":19},{"greeting":"晚上好👋, 在属于自己的时间好好放松😌~","startTime":20,"endTime":24}]},
+  twikooEnvId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
+  commentBarrageConfig:undefined,
+  music_page_default: "nav_music",
   root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: {"mode":"cdn","api":"https://img2color-go.vercel.app/api?img=","cover_change":true},
+  authorStatus: undefined,
   algolia: undefined,
-  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":-1,"unescape":false,"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
-  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简"},
-  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":200,"highlightFullpage":true,"highlightMacStyle":true},
+  localSearch: {"path":"/search.xml","preload":false,"languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"距离上次更新已经过去了","messageNext":"天，文章的内容可能已经过时。"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
   copy: {
     success: '复制成功',
-    error: '复制失败',
+    error: '复制错误',
     noSupport: '浏览器不支持'
   },
   relativeDate: {
     homepage: false,
+    simplehomepage: true,
     post: false
   },
-  runtime: '',
-  dateSuffix: {
+  runtime: '天',
+  date_suffix: {
     just: '刚刚',
     min: '分钟前',
     hour: '小时前',
     day: '天前',
     month: '个月前'
   },
-  copyright: undefined,
-  lightbox: 'fancybox',
-  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
-  infinitegrid: {
-    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
-    buttonText: '加载更多'
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: Ming","link":"链接: ","source":"来源: MINGの部落格","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'mediumZoom',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
   },
   isPhotoFigcaption: true,
-  islazyloadPlugin: false,
+  islazyload: true,
   isAnchor: false,
-  percent: {
-    toc: true,
-    rightside: true,
-  },
-  autoDarkmode: false
+  shortcutKey: undefined,
+  autoDarkmode: true
 }</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: 'MINGの部落格',
   title: '全面理解STL-set系列容器与迭代器分类',
-  isHighlightShrink: false,
+  postAI: '',
+  pageFillDescription: '迭代器的分类, 小技巧, set容器, set和vector的区别, set的排序：, string会按字典序排列, 自定义排序函数, set的迭代器, set和vector迭代器的相同点：, set和vector迭代器的不同点：, 多次调用++实现+同样的效果, 迭代器的帮手函数, 1. stdnext：获取迭代器的下一个位置, 2. stdadvance：就地移动迭代器, 3. next 和 advance 对负数的支持, 4. stdprev：向后移动迭代器, 5. stddistance：计算两个迭代器之间的距离, 注意上面所有提到的实现思想都是伪代码, inset()函数, 向set中插入元素, insert 的第一个返回值：指向插入x2F现有元素的迭代器, insert的第二个返回值：是否插入成功, 补充内容：, find()函数, erase()函数, 删除指定元素, 删除指定区间（隐患操作）, 隐患警告：, 使用 lower_bound() 和 upper_bound() 函数, 正确从 set 中删除指定范围的元素, set增删改查总结, set()的遍历, 从c语言指针到迭代器, 基于范围的for循环, set 和其他容器之间的转换, set的妙用：排序, 清空set所有元素, set的大小（元素个数）, multiset：set的不去重版本, 不去重的set, 查找multiset中的等值区间, 删除 multiset 中的等值元素, multiset中等值元素个数, multiset 中的find()函数, multiset增删改查操作总结, unordered_set 无序集合, set 系列成员函数总结, 不同版本的 set 容器比较迭代器的分类迭代器类型描述提供的运算符重载具有此迭代器的容器相应的输入迭代器只读访问序列允许单次读取每个元素可读取一次性输出迭代器只写访问序列允许将数据写入到序列中可写入一次性前向迭代器允许读写访问支持多次读取同一元素双向迭代器支持前向和后向遍历随机访问迭代器支持直接访问序列中的任意元素提供随机访问能力迭代器外包装封装原始迭代器增强功能如反向遍历过滤等与所包装的迭代器保持一致与所包装的迭代器一致一次性的理解单向性和不可逆性每个元素只能被访问一次调用会使这个迭代器指向下一个元素包含关系前向迭代器双向迭代器随机访问迭代器这意味着如果一个模板函数比如要求迭代器是前向迭代器即可那么也可以给他随机访问迭代器因为前向迭代器是随机访问迭代器的子集例如和都可以调用则直接提供了作为成员函数小技巧打印任意包含的容器的黑科技容器容器是一个存储不重复元素的集合唯一性中的元素是唯一的不能重复自动排序中的元素根据键值自动进行排序默认使用升序排列动态大小可以根据需要动态调整大小自动管理内存和的区别都是能存储一连串数据的容器区别会自动给其中的元素从小到大排序而会保持插入时的顺序区别会把重复的元素去除只保留一个即去重区别中的元素在内存中是连续的可以高效地按索引随机访问则不行区别中的元素可以高效地按值查找而则低效输出排序并去重的排序会按字典序排列会从小到大排序对来说就是数值的大小比较那么对字符串类型要怎么排序呢输出其实类定义了运算符重载他会按字典序比较两个字符串所谓字典序就是优先比较两者第一个字符按码比较如果相等则继续比较下一个不相等则直接以这个比较的结果返回如果比到末尾都相等且字符串长度一样则视为相等警告千万别用做字符串集合这样只会按字符串指针的地址去判断相等而不是所指向字符串的内容自定义排序函数输出作为模板类其实有两个模板参数第一个是容器内元素的类型例如或等第二个定义了你想要的比较函子内部会调用这个函数来决定怎么排序如果不指定默认会直接用运算符来比较这里我们定义个作为比较函子和默认的一样用来比较所以没有变化相等怎么判断恶搞一下这里我们把比较函子定义成只比较字符串第一个字符只比较第一个字符输出神奇的一幕发生了不见了为什么因为去重为什么会把和视为相等的元素明明内容都不一样首先搞懂内部是怎么确定两个元素和相等的也就是说他内部没有用到运算符而是调用了两次比较函子来判断的逻辑是若不小于且不小于则视为等于所以这就是为什么只需要一个比较函子不需要相等函子的原因所以我们这里写了就相当于让相等条件变成了也就是说只要第一个字符相等就视为字符串相等所以和会被视为相等的元素从而被给去重了扩展知识其实无非就是个只比较无视的顺手还加了一些方便的函数比如和小技巧大小写不敏感的容器既然已经知道了容器进行比较的原理我们就可以在比较函子中进行一些操作让和被视为相同的元素只保存一个即大小写不敏感转换为小写输出的迭代器和迭代器的相同点上一篇我们讨论了迭代器具有和两个成员函数他们分别返回指向数组头部元素和尾部再之后一格元素的迭代器对象作为连续数组他的迭代器基本等效于指针也有和函数他返回的迭代器对象重载了来访问指向的地址输出和迭代器的不同点的迭代器对象也重载了为红黑树的遍历提供了和的重载而没有这是因为中的元素在内存中是连续的可以随机访问而是不连续的所以不能随机访问只能顺序访问容器随机访问的开销很大为了防止滥用直接放弃重载运算符因此无法通过迭代器偏移量的方式来访问元素所以这里调用就出错了多次调用实现同样的效果迭代器没有重载运算符因为他不是随机迭代器那如果我确实需要让迭代器向前移动格怎么办可以调用三次运算实现和同样的效果输出迭代器的复杂度是而迭代器模拟出来的复杂度为虽然低效但至少可以用了迭代器的帮手函数获取迭代器的下一个位置函数用于获取指定迭代器向前移动指定步数后的新迭代器而不会改变原迭代器它适用于所有类型的迭代器包括输入迭代器前向迭代器双向迭代器和随机访问迭代器作用对于随机访问迭代器它会直接使用运算符对于不支持运算符的迭代器如前向迭代器和双向迭代器则会依次调用运算符直至移动完成相当于相当于三次输出实现思想判断迭代器类型若是随机访问迭代器则直接使用否则循环调用就地移动迭代器与不同是就地修改传入的迭代器而不是返回一个新的迭代器它适用于需要修改迭代器本身的场景作用如果迭代器支持运算符则直接使用该运算符否则会像一样逐步调用等价于会调用三次输出实现思想会直接修改传入的迭代器而不返回新的迭代器和对负数的支持负数支持如果迭代器类型是双向迭代器或更高级别和支持负数表示迭代器向前移动例如相当于对于更简便的使用提供了向前移动的功能向后移动迭代器是的逆操作用于向后移动迭代器其内部实现类似于可以有效替代手动的负数操作实现计算两个迭代器之间的距离用于计算两个迭代器之间的距离对于随机访问迭代器它的计算是常数时间对于其他类型的迭代器它会逐步计算两者的差距示例调用逐步计算距离输出实现思想会根据迭代器的类型使用高效或逐步的方式计算迭代器之间的距离注意上面所有提到的实现思想都是伪代码感兴趣的可以查看的源码下面是的实现它使用了一个辅助函数以及来获取迭代器的类别函数向中插入元素可以通过调用往中添加一个元素插入之前插入之后输出插入之前插入之后用户无需关心插入的位置例如插入元素时会自动插入到和之间从而使元素总是从小到大排列刚刚说过具有自动去重的功能如果插入的元素已经在中存在则不会完成插入插入之前插入之后输出插入之前插入之后例如往集合中插入则什么也不会发生因为已经在集合中了的第一个返回值指向插入现有元素的迭代器第一个返回值是一个迭代器分两种情况讨论插入成功吗所在的位置再次插入成功吗所在的位置输出插入成功吗所在的位置再次插入成功吗所在的位置当向容器添加元素成功时该迭代器指向容器新添加的元素类型的值为如果添加失败即证明原容器中已存有相同的元素此时返回的迭代器就指向容器中相同的此元素同时类型的值为的第二个返回值是否插入成功插入成功吗插入成功吗输出插入成功吗插入成功吗函数的返回值是一个类型也就是说他同时返回了两个值其中第二个返回值是类型指示了插入是否成功若元素在容器中已存有相同的元素则插入失败这个值为如果元素在中不存在则插入成功这个值为补充内容类似于里的元组不过固定只能有两个元素自从引入了能支持任意多元素的以来就没什么事了但是为了兼容还是继续存在着是个模板类根据尖括号里你给定的类型来替换这里的和例如就会变成提供了结构化绑定的语法可以取出一个结构体的所有成员也不例外等价于使用结构化绑定语法插入成功吗所在的位置再次插入成功吗所在的位置输出插入成功吗所在的位置再次插入成功吗所在的位置函数有一个函数只需给定一个参数他会寻找中与之相等的元素如果找到则返回指向找到元素的迭代器如果找不到则返回迭代器刚刚说过指向的是的尾部再之后一格元素他指向的是一个不存在的地址不可能有任何元素在那里因此常被标准库用作一个标记来表示找不到的情况中的找不到元素时会返回来表示也是这个思想所在位置比小的数比大的数输出所在位置比小的数比大的数判断某个元素是否存在因此可以用这个写法来判断集合中是否存在元素集合中存在集合中没有集合中存在集合中没有输出集合中存在集合中没有这是个固定的写法虽然要调用两个函数看起来好像挺麻烦但是大家都在用还有一种更直观的写法返回的是一个类型表示集合中相等元素的个数集合中存在集合中没有集合中存在集合中没有输出集合中存在集合中没有等等不是说具有去重的功能不会有重复的元素吗为什么标准库让计算个数而不是直接返回因为他们考虑到接口的泛用性毕竟就不去重对于能去重的只可能返回或个数为就说明集合中没有该元素个数为就说明集合中存在该元素因为类型能隐式转换为所以可以省略不写函数删除指定元素以元素值作为参数传入删之前删之后删了个元素输出删之前删之后删了个元素可以删除集合中值为的元素返回一个整数表示被他删除元素的个数个数为就说明集合中没有该元素删除失败个数为就说明集合中存在该元素删除成功这里的个数和的情况很像因为中不会有重复的元素所以只可能返回或表示是否删除成功还支持迭代器作为参数原始集合删除元素删最小元素删最大元素输出原始集合删除元素删最小元素删最大元素可以删除集合位于处的元素用法举例会删除集合中值为的元素和等价会删除集合中最小的元素因为具有自动排序的特性排在最前面的元素一定是最小的那个会删除集合中最大的元素因为自动排序的特性排在最后面的元素一定是最大的那个错误操作错误的修改方式直接使用强制转换后修改修改后的输出修改后的删除指定区间隐患操作方法支持输入两个迭代器作为参数使用可以删除集合中从到之间的元素包含不包含即它是一个前开后闭区间这符合标准库的一贯设计风格示例代码原始集合删除之间的元素输出原始集合删除之间的元素上面的代码会删除中所有满足的元素由于有自动排序的特性删除和之间的元素即为删除的元素隐患警告注意必须在之前否则会导致崩溃如果集合中没有将返回而会返回指向的迭代器此时的迭代器在之后违反了必须在之前的规则可能导致程序崩溃示例代码隐患演示没有原始集合删除之间的元素输出原始集合使用和函数为了安全地删除指定区间的元素可以使用以下两个函数示例代码通过测试原始集合输出原始集合通过测试通过测试通过测试找到第一个等于的元素找到第一个大于等于的元素找到第一个大于的元素当找不到时它们都会返回正确从中删除指定范围的元素可以使用和来安全删除指定区间原始集合删除之间的元素输出原始集合删除之间的元素在此代码中会删除中所有满足的元素使得区间变为即闭区间增删改查总结操作实现方法增删或者改一旦插入就无法修改只能先删再增查或者可以看到没有直接的修改为什么正如上面提到的内部是需要排序的如果你直接修改某个元素就会破坏顺序的遍历原始结合遍历方法和一样只需要背板上面的操作我们需要讨论的是这种设计的思想是什么从语言指针到迭代器上一张我们提到迭代器就是在模仿语言指针回想一下语言咋遍历数组的循环的范围是因为这里等价于所以索性用作为迭代的变量避免一次加法的开销循环的范围变成总是大于的的初值总是小于末值所以把改成是一样的还高效一点之前我们提过建议用前置运算符区别我们上一篇说过后置先保存变量用于返回再原地自增前置比较高效且符合逻辑后置对语言八股文考试有用个人拙见终于到了这一步的迭代器模式也就呼之欲出了和返回了迭代器类这个类具有运算符重载使得他能模仿指针的行为从而尽可能在不同容器之间重用算法例如和而不必修改算法的代码本身是库解耦思想的体现基于范围的循环为了减少重复打代码的痛苦引入了个语法糖基于范围的循环类型变量名可迭代对象原始集合输出原始集合这种写法无非就是刚才那一大堆代码的简写基于范围的循环只是一个简写他会遍历整个区间原始集合输出原始集合有时写完整版会有更大的自由度也就是说这里的和可以替换为其他位置的迭代器如比如用和返回的迭代器选择满足的元素来打印原始集合结果数组输出原始集合结果数组和其他容器之间的转换我们说过的构造函数也能接受两个前向迭代器作为参数的迭代器符合这个要求没错的构造函数可以接受任何前向迭代器不一定是自己的迭代器哦任何前向迭代器而是双向迭代器覆盖了前向迭代器满足要求所以可以把中的一个区间拷贝到中去原始集合结果数组输出原始集合结果数组相当于过滤出所有的元素了如果是那就毫无保留地把的全部元素都拷贝进了原始数组结果集合也可以反过来把转成原始数组结果集合输出原始数组结果集合的妙用排序请先忘掉把转成会让元素自动排序和去重我们其实可以利用这一点把转成再转回这样就实现去重了原始数组排序去重后的数组输出原始数组排序去重后的数组当然这个操作是远不如效率高只有偶尔的场景可能遇到清空所有元素如下清空有三种方式最常用的是调用函数这和的函数名字是一样的方便记忆也是的设计哲学原始集合清空后集合输出原始集合清空后集合的大小元素个数和一样也有个函数查询其中元素个数原始集合元素个数输出原始集合元素个数的不去重版本不去重的具有自动排序自动去重能高效地查询的特点其中去重和数学的集合很像还有一种不会去重的版本那就是他允许重复的元素但仍保留自动排序能高效地查询的特点的头文件也是输出特点因为不会去重但又自动排序所以其中所有相等的元素都会紧挨着例如查找中的等值区间刚刚说了里相等的元素都是紧挨着排列的所以可以用和函数获取所有相等值的区间并进行相应操作原始集合删除以后输出原始集合删除以后对于和的参数相同的情况可以用一次性求出两个边界获得等值区间更高效原始集合删除以后输出原始集合删除以后等值区间和调用两次大于等于起点大于起点的不同当指定的值找不到时返回两个迭代器代表空区间却会正常返回指向大于等于大于指定值的迭代器原因的用途都是返回一个用来遍历的区间两个迭代器是一起用的不会单独用所以为了高效找不到等值元素会直接返回空区间原始集合输出值时用和而不是和输出原始集合返回的等值区间可以求长度也可以遍历对而言遍历似乎没什么用反正都是一堆相等的元素求长度也没什么用可以用替代总之就是非常尴尬但之后说到的时候这个函数就会很有用了原始集合等于的元素个数输出原始集合等于的元素个数删除中的等值元素只有一个参数的版本会把所有等于的元素删除例如等价于原始集合删除以后输出原始集合删除以后中等值元素个数返回中等于的元素个数如果找不到则返回原始集合等于的元素个数等于的元素个数输出原始集合等于的元素个数等于的元素个数刚刚说具有去重功能的只会返回或而没有去重功能的可以返回任何的数中的函数允许多个重复的元素存在那么会返回哪一个第一个原始集合集合中存在集合中存在第一个在头部输出原始集合集合中存在集合中存在第一个在头部会返回第一个等于的元素的迭代器找不到也是返回增删改查操作总结操作实现方法增删或者改一旦插入就无法修改只能先删再增查或者依旧没有直接的修改操作原因与容器相同无序集合新增了一个容器输出会让元素从小到大排序而不会排序里面的元素都是完全随机的顺序与插入的顺序也不一样虽然你可能观察到有时刚好与插入的顺序相反但这只是巧合具体顺序与实现有关基于红黑树实现相当于二分查找树而基于散列哈希表实现正是哈希函数导致了随机的顺序系列成员函数总结函数含义插入一个元素删除所有等于的元素有多少个等于的元素或或指向第一个等于的元素指向第一个大于等于的元素指向第一个大于的元素所有等于的元素所组成的区间不同版本的容器比较类型去重有序查找插入类型头文件因为是无序的因为是无序的适合按索引查找通过运算符适合按值相等查找以及按值大于小于查找分别通过函数和只适合按值相等查找通过函数小贴士的性能在数据量足够大时平均查找时间比短但不保证稳定我个人推荐使用久经考验的在数据量小时更高效',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: true,
   isToc: true,
-  pageType: 'post'
-}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
-  const $loadingBox = document.getElementById('loading-box')
-  const $body = document.body
-  const preloader = {
-    endLoading: () => {
-      $body.style.overflow = ''
-      $loadingBox.classList.add('loaded')
-    },
-    initLoading: () => {
-      $body.style.overflow = 'hidden'
-      $loadingBox.classList.remove('loaded')
-    }
+  postUpdate: '2025-08-27 21:27:00',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
   }
 
-  preloader.initLoading()
-  window.addEventListener('load', preloader.endLoading)
-
-  if (true) {
-    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
-    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
   }
-})()</script><div id="web_bg" style="background-image: url(/img/配置/背景.jpg);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">28</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">15</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">9</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 分析</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E6%A0%87%E7%AD%BE/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/%E5%88%86%E7%B1%BB/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fa fa-archive"></i><span> 档案室</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fa fa-user"></i><span> 我的</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E5%8F%8B%E9%93%BE/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 收藏</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1VB4y137ys/"><i class="fa-fw fas fa-heart"></i><span> ROS2理论与实践</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1if4y147hS/"><i class="fa-fw fas fa-heart"></i><span> 动手学深度学习</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://geek-logic.com/"><i class="fa-fw fas fa-heart"></i><span> Geek Logic</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://github.com/parallel101/cppguidebook"><i class="fa-fw fas fa-heart"></i><span> 小彭老师C++大典</span></a></li><li><a class="site-page child" href="/unpublished/ROS2%E7%90%86%E8%AE%BA%E4%B8%8E%E5%AE%9E%E8%B7%B5%E2%80%94%E2%80%94%E6%A0%B8%E5%BF%83%E7%AF%87/"><i class="fa-fw fas fa-heart"></i><span> ROS2</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/%E5%85%B3%E4%BA%8E/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(./img/文章封面/1.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">MINGの部落格</span></a><a class="nav-page-title" href="/"><span class="site-name">全面理解STL-set系列容器与迭代器分类</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 分析</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E6%A0%87%E7%AD%BE/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/%E5%88%86%E7%B1%BB/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fa fa-archive"></i><span> 档案室</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fa fa-user"></i><span> 我的</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E5%8F%8B%E9%93%BE/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 收藏</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1VB4y137ys/"><i class="fa-fw fas fa-heart"></i><span> ROS2理论与实践</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1if4y147hS/"><i class="fa-fw fas fa-heart"></i><span> 动手学深度学习</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://geek-logic.com/"><i class="fa-fw fas fa-heart"></i><span> Geek Logic</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://github.com/parallel101/cppguidebook"><i class="fa-fw fas fa-heart"></i><span> 小彭老师C++大典</span></a></li><li><a class="site-page child" href="/unpublished/ROS2%E7%90%86%E8%AE%BA%E4%B8%8E%E5%AE%9E%E8%B7%B5%E2%80%94%E2%80%94%E6%A0%B8%E5%BF%83%E7%AF%87/"><i class="fa-fw fas fa-heart"></i><span> ROS2</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/%E5%85%B3%E4%BA%8E/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">全面理解STL-set系列容器与迭代器分类</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-10-22T16:00:00.000Z" title="发表于 2024-10-23 00:00:00">2024-10-23</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-01-13T13:58:34.835Z" title="更新于 2025-01-13 21:58:34">2025-01-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/C/">C++</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">11.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>49分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="迭代器的分类"><a href="#迭代器的分类" class="headerlink" title="迭代器的分类"></a>迭代器的分类</h2><table>
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 7.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><div class="back-home-button"><i class="anzhiyufont anzhiyu-icon-grip-vertical"></i><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://ming-blog.top/" title="MINGの部落格"><img class="back-menu-item-icon" src="/img/配置/头像.jpg" alt="MINGの部落格"/><span class="back-menu-item-text">MINGの部落格</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://github.com/MING-Z0/" title="GitHub"><img class="back-menu-item-icon" src="https://image.anheyu.com/favicon.ico" alt="GitHub"/><span class="back-menu-item-text">GitHub</span></a></div></div></div></div><a id="site-name" href="/" accesskey="h"><div class="title">MINGの部落格</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/archives/"><span> 隧道</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/categories/"><span> 分类</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/tags/"><span> 标签</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/link/"><span> 友人帐</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/about/"><span> 关于本人</span></a></div></div></div><div id="nav-right"><div class="nav-button only-home" id="travellings_button" title="随机前往一个开往项目网站"><a class="site-page" onclick="anzhiyu.totraveling()" title="随机前往一个开往项目网站" href="javascript:void(0);" rel="external nofollow" data-pjax-state="external"><i class="anzhiyufont anzhiyu-icon-train"></i></a></div><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><div class="nav-button" id="search-button"><a class="site-page social-icon search" href="javascript:void(0);" title="搜索🔍" accesskey="s"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span> 搜索</span></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="/./img/%E6%89%93%E8%B5%8F/wechat.jpg" target="_blank"><img class="post-qr-code-img" alt="微信" src="/./img/%E6%89%93%E8%B5%8F/wechat.jpg"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/AimRT/" style="font-size: 1.05rem;">AimRT<sup>1</sup></a><a href="/tags/CMake/" style="font-size: 1.05rem;">CMake<sup>2</sup></a><a href="/tags/CPP/" style="font-size: 1.05rem;">CPP<sup>21</sup></a><a href="/tags/CUDA/" style="font-size: 1.05rem;">CUDA<sup>10</sup></a><a href="/tags/STL/" style="font-size: 1.05rem;">STL<sup>5</sup></a><a href="/tags/%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97/" style="font-size: 1.05rem;">并行计算<sup>12</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/" style="font-size: 1.05rem;">开发环境<sup>1</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E8%AF%AD%E8%A8%80/" style="font-size: 1.05rem;">开发语言<sup>5</sup></a><a href="/tags/%E6%9C%BA%E5%99%A8%E4%BA%BA/" style="font-size: 1.05rem;">机器人<sup>1</sup></a><a href="/tags/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" style="font-size: 1.05rem;">访存优化<sup>1</sup></a><a href="/tags/%E9%9A%8F%E8%AE%B0/" style="font-size: 1.05rem;">随记<sup>5</sup></a><a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 1.05rem;">面试<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2025/05/"><span class="card-archive-list-date">五月 2025</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2025/01/"><span class="card-archive-list-date">一月 2025</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2024/11/"><span class="card-archive-list-date">十一月 2024</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">6</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2024/10/"><span class="card-archive-list-date">十月 2024</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">15</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/12/"><span class="card-archive-list-date">十二月 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">4</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="post-meta-categories"><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-inbox post-meta-icon"></i><a class="post-meta-categories" href="/categories/CPP/" itemprop="url">CPP</a></span><span class="article-meta tags"><a class="article-meta__tags" href="/tags/CPP/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>CPP</span></a><a class="article-meta__tags" href="/tags/STL/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>STL</span></a><a class="article-meta__tags" href="/tags/%E5%BC%80%E5%8F%91%E8%AF%AD%E8%A8%80/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>开发语言</span></a></span></div></div><h1 class="post-title" itemprop="name headline">全面理解STL-set系列容器与迭代器分类</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2024-10-22T16:00:00.000Z" title="发表于 2024-10-23 00:00:00">2024-10-23</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2025-08-27T13:27:00.985Z" title="更新于 2025-08-27 21:27:00">2025-08-27</time></span></div><div class="meta-secondline"><span class="post-meta-separator"></span><span class="post-meta-wordcount"><i class="anzhiyufont anzhiyu-icon-file-word post-meta-icon" title="文章字数"></i><span class="post-meta-label" title="文章字数">字数总计:</span><span class="word-count" title="文章字数">11.2k</span><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-clock post-meta-icon" title="阅读时长"></i><span class="post-meta-label" title="阅读时长">阅读时长:</span><span>49分钟</span></span><span class="post-meta-separator"></span><span class="post-meta-pv-cv" id="" data-flag-title="全面理解STL-set系列容器与迭代器分类"><i class="anzhiyufont anzhiyu-icon-fw-eye post-meta-icon"></i><span class="post-meta-label" title="阅读量">阅读量:</span><span id="busuanzi_value_page_pv"><i class="anzhiyufont anzhiyu-icon-spinner anzhiyu-spin"></i></span></span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/4.jpg"></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://ming-z0.github.io/2024/10/23/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%B8%89%E3%80%81set%E7%B3%BB%E5%88%97%E5%AE%B9%E5%99%A8%E4%B8%8E%E8%BF%AD%E4%BB%A3%E5%99%A8%E5%88%86%E7%B1%BB/"><header><a class="post-meta-categories" href="/categories/CPP/" itemprop="url">CPP</a><a href="/tags/CPP/" tabindex="-1" itemprop="url">CPP</a><a href="/tags/STL/" tabindex="-1" itemprop="url">STL</a><a href="/tags/%E5%BC%80%E5%8F%91%E8%AF%AD%E8%A8%80/" tabindex="-1" itemprop="url">开发语言</a><h1 id="CrawlerTitle" itemprop="name headline">全面理解STL-set系列容器与迭代器分类</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">Ming</span><time itemprop="dateCreated datePublished" datetime="2024-10-22T16:00:00.000Z" title="发表于 2024-10-23 00:00:00">2024-10-23</time><time itemprop="dateCreated datePublished" datetime="2025-08-27T13:27:00.985Z" title="更新于 2025-08-27 21:27:00">2025-08-27</time></header><h2 id="迭代器的分类"><a href="#迭代器的分类" class="headerlink" title="迭代器的分类"></a>迭代器的分类</h2><table>
 <thead>
 <tr>
 <th>迭代器类型</th>
@@ -460,7 +481,7 @@
 <li><code>set.erase(set.begin())</code> 会<strong>删除集合中最小的元素</strong>（因为 set 具有自动排序的特性，排在最前面的元素一定是最小的那个）</li>
 <li><code>set.erase(std::prev(set.end()))</code> 会<strong>删除集合中最大的元素</strong>（因为自动排序的特性，排在最后面的元素一定是最大的那个）</li>
 </ul>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ！错误操作</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;set&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;printer.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">MyComp</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">operator</span><span class="params">()</span><span class="params">(<span class="type">const</span> std::string &amp;lhs, <span class="type">const</span> std::string &amp;rhs)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> lhs &lt; rhs;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::set&lt;std::string, MyComp&gt; b = &#123;<span class="string">&quot;arch&quot;</span>, <span class="string">&quot;any&quot;</span>, <span class="string">&quot;zero&quot;</span>, <span class="string">&quot;Linux&quot;</span>, <span class="string">&quot;linUX&quot;</span>&#125;;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;set = &quot;</span> &lt;&lt; b &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 错误的修改方式：直接使用const_cast强制转换后修改</span></span><br><span class="line">    *<span class="built_in">const_cast</span>&lt;std::string *&gt;(&amp;(*b.<span class="built_in">find</span>(<span class="string">&quot;any&quot;</span>))) = <span class="string">&quot;zebra&quot;</span>;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;修改后的set = &quot;</span> &lt;&lt; b &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;found = &quot;</span> &lt;&lt; b.<span class="built_in">count</span>(<span class="string">&quot;zebra&quot;</span>) &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 输出:</span></span><br><span class="line"><span class="comment">// set = &#123;Linux, any, arch, linUX, zero&#125; </span></span><br><span class="line"><span class="comment">// 修改后的set = &#123;Linux, zebra, arch, linUX, zero&#125; </span></span><br><span class="line"><span class="comment">// found = 0</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ！错误操作</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;set&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;printer.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">MyComp</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">operator</span><span class="params">()</span><span class="params">(<span class="type">const</span> std::string &amp;lhs, <span class="type">const</span> std::string &amp;rhs)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> lhs &lt; rhs;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::set&lt;std::string, MyComp&gt; b = &#123;<span class="string">&quot;arch&quot;</span>, <span class="string">&quot;any&quot;</span>, <span class="string">&quot;zero&quot;</span>, <span class="string">&quot;Linux&quot;</span>, <span class="string">&quot;linUX&quot;</span>&#125;;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;set = &quot;</span> &lt;&lt; b &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 错误的修改方式：直接使用const_cast强制转换后修改</span></span><br><span class="line">    *<span class="built_in">const_cast</span>&lt;std::string *&gt;(&amp;(*b.<span class="built_in">find</span>(<span class="string">&quot;any&quot;</span>))) = <span class="string">&quot;zebra&quot;</span>;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;修改后的set = &quot;</span> &lt;&lt; b &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;found = &quot;</span> &lt;&lt; b.<span class="built_in">count</span>(<span class="string">&quot;zebra&quot;</span>) &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 输出:</span></span><br><span class="line"><span class="comment">// set = &#123;Linux, any, arch, linUX, zero&#125;</span></span><br><span class="line"><span class="comment">// 修改后的set = &#123;Linux, zebra, arch, linUX, zero&#125;</span></span><br><span class="line"><span class="comment">// found = 0</span></span><br></pre></td></tr></table></figure>
 
 <h4 id="删除指定区间（隐患操作）"><a href="#删除指定区间（隐患操作）" class="headerlink" title="删除指定区间（隐患操作）"></a>删除指定区间（隐患操作）</h4><p><code>erase</code> 方法支持输入<strong>两个迭代器</strong>作为参数：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">iterator erase(iterator first, iterator last);</span><br></pre></td></tr></table></figure>
@@ -838,9 +859,166 @@
 <p><code>unordered_set</code> 只适合按<strong>值相等</strong>查找，通过函数 <code>find</code>。</p>
 <p>小贴士：<code>unordered_set</code> 的性能在数据量足够大（&gt;1000）时，平均查找时间比 <code>set</code> 短，但不保证稳定。</p>
 <p>我个人推荐使用久经考验的 <code>set</code>，在数据量小时更高效。</p>
-</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://ming-z0.github.io">Ming</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://ming-z0.github.io/2024/10/23/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%B8%89%E3%80%81set%E7%B3%BB%E5%88%97%E5%AE%B9%E5%99%A8%E4%B8%8E%E8%BF%AD%E4%BB%A3%E5%99%A8%E5%88%86%E7%B1%BB/">https://ming-z0.github.io/2024/10/23/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%B8%89%E3%80%81set%E7%B3%BB%E5%88%97%E5%AE%B9%E5%99%A8%E4%B8%8E%E8%BF%AD%E4%BB%A3%E5%99%A8%E5%88%86%E7%B1%BB/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://ming-z0.github.io" target="_blank">MINGの部落格</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/C/">C++</a><a class="post-meta__tags" href="/tags/STL/">STL</a><a class="post-meta__tags" href="/tags/%E5%BC%80%E5%8F%91%E8%AF%AD%E8%A8%80/">开发语言</a></div><div class="post-share"><div class="social-share" data-image="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/1.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2024/10/24/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC0%E7%AB%A0/" title="CUDA开始的GPU编程-第0章"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/9.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">CUDA开始的GPU编程-第0章</div></div><div class="info-2"><div class="info-item-1">CUDA开始的GPU编程前置条件：  熟悉C&#x2F;C++编程、熟悉STL、函数模板等 Nvidia GTX900及以上显卡、CUDA 11及以上 CMake 3.18及以上  由于文本编辑器不持支CUDA代码块，文中CUDA代码将使用cpp代码块进行高亮显示，请注意区分。 在开始之前，我想提醒读者，这篇博客将以工程应用的思路为主，不会深入探讨CUDA的底层原理。我们关注实际的使用案例和实践技巧。未来，我会逐步更新更为详尽的内容，敬请期待！ 第0章：Hello, world from GPU!CMake中启用CUDA支持123456789#...</div></div></div></a><a class="pagination-related" href="/2024/10/21/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E5%9B%9B%E3%80%81string%E7%94%A8%E6%B3%95%E6%8C%87%E5%8D%97&amp;%E6%BA%90%E7%A0%81%E5%88%A8%E6%9E%90/" title="全面理解STL-std::string用法指南&amp;源码刨析"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/16.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">全面理解STL-std::string用法指南&源码刨析</div></div><div class="info-2"><div class="info-item-1">一、ASCII码计算机如何表达字符众所周知，计算机只能处理二进制整数，字符要怎么办呢？ 于是就有了 ASCII 码表，它规定，每个英文字符（包括大小写字母、数字、特殊符号）都对应着一个整数。在计算机里只要存储这个的整数，就能代表这个字符了。 例如 32 代表空格，48 代表 ‘0’，65 代表 ‘A’，97 代表 ‘a’…… 32~126 这些整数就用于是表示这些**可显示字符(printable character)**的。  除了可显示字符(printable character)外，ASCII 还规定了一类特殊的控制字符(control character)：  0...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2024/10/21/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%B8%80%E3%80%81%E5%89%8D%E8%A8%80/" title="全面理解STL-前言"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/3.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-21</div><div class="info-item-2">全面理解STL-前言</div></div><div class="info-2"><div class="info-item-1">C++ 标准模板库（Standard Template Library，STL）是一套功能强大的 C++ 模板类和函数的集合，它提供了一系列通用的、可复用的算法和数据结构。 STL 的设计基于泛型编程，这意味着使用模板可以编写出独立于任何特定数据类型的代码。 STL 分为多个组件，包括容器（Containers）、迭代器（Iterators）、算法（Algorithms）、函数对象（Function Objects）和适配器（Adapters）等。 使用 STL 的好处:  代码复用：STL 提供了大量的通用数据结构和算法，可以减少重复编写代码的工作。 性能优化：STL...</div></div></div></a><a class="pagination-related" href="/2024/10/21/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%BA%8C%E3%80%81vector%E5%AE%B9%E5%99%A8%E4%B8%8E%E8%BF%AD%E4%BB%A3%E5%99%A8%E5%85%A5%E9%97%A8/" title="全面理解STL-vector容器与迭代器入门"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/17.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-21</div><div class="info-item-2">全面理解STL-vector容器与迭代器入门</div></div><div class="info-2"><div class="info-item-1">vector容器构造显式构造指定一个参数 explicit vector(size_t n)123456#include &lt;vector&gt;using namespace std;int main()&#123;    vector&lt;int&gt; a;    return 0;  vector...</div></div></div></a><a class="pagination-related" href="/2024/10/21/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E5%9B%9B%E3%80%81string%E7%94%A8%E6%B3%95%E6%8C%87%E5%8D%97&%E6%BA%90%E7%A0%81%E5%88%A8%E6%9E%90/" title="全面理解STL-std::string用法指南&amp;源码刨析"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/16.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-21</div><div class="info-item-2">全面理解STL-std::string用法指南&amp;源码刨析</div></div><div class="info-2"><div class="info-item-1">一、ASCII码计算机如何表达字符众所周知，计算机只能处理二进制整数，字符要怎么办呢？ 于是就有了 ASCII 码表，它规定，每个英文字符（包括大小写字母、数字、特殊符号）都对应着一个整数。在计算机里只要存储这个的整数，就能代表这个字符了。 例如 32 代表空格，48 代表 ‘0’，65 代表 ‘A’，97 代表 ‘a’…… 32~126 这些整数就用于是表示这些**可显示字符(printable character)**的。  除了可显示字符(printable character)外，ASCII 还规定了一类特殊的控制字符(control character)：  0...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div class="comment-switch"><span class="first-comment">Twikoo</span><span id="switch-btn"></span><span class="second-comment">Livere</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div><div><div id="lv-container" data-id="city" data-uid="MTAyMC82MDIzOS8zNjcwNw"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Ming</div><div class="author-info-description">一个记录、分享自己学习过程的博客</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">28</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">15</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">9</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/ming-z0" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:ming-zhanglu@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到MINGの部落格！</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%AD%E4%BB%A3%E5%99%A8%E7%9A%84%E5%88%86%E7%B1%BB"><span class="toc-number">1.</span> <span class="toc-text">迭代器的分类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E6%8A%80%E5%B7%A7"><span class="toc-number">2.</span> <span class="toc-text">小技巧</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#set%E5%AE%B9%E5%99%A8"><span class="toc-number">3.</span> <span class="toc-text">set容器</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#set%E5%92%8Cvector%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">3.1.</span> <span class="toc-text">set和vector的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#set%E7%9A%84%E6%8E%92%E5%BA%8F%EF%BC%9A"><span class="toc-number">3.2.</span> <span class="toc-text">set的排序：</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#string%E4%BC%9A%E6%8C%89%E2%80%9C%E5%AD%97%E5%85%B8%E5%BA%8F%E2%80%9D%E6%8E%92%E5%88%97"><span class="toc-number">3.2.1.</span> <span class="toc-text">string会按“字典序”排列</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E6%8E%92%E5%BA%8F%E5%87%BD%E6%95%B0"><span class="toc-number">3.2.2.</span> <span class="toc-text">自定义排序函数</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#set%E7%9A%84%E8%BF%AD%E4%BB%A3%E5%99%A8"><span class="toc-number">3.3.</span> <span class="toc-text">set的迭代器</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#set%E5%92%8Cvector%E8%BF%AD%E4%BB%A3%E5%99%A8%E7%9A%84%E7%9B%B8%E5%90%8C%E7%82%B9%EF%BC%9A"><span class="toc-number">3.3.0.1.</span> <span class="toc-text">set和vector迭代器的相同点：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#set%E5%92%8Cvector%E8%BF%AD%E4%BB%A3%E5%99%A8%E7%9A%84%E4%B8%8D%E5%90%8C%E7%82%B9%EF%BC%9A"><span class="toc-number">3.3.0.2.</span> <span class="toc-text">set和vector迭代器的不同点：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%A4%9A%E6%AC%A1%E8%B0%83%E7%94%A8-%E5%AE%9E%E7%8E%B0-%E5%90%8C%E6%A0%B7%E7%9A%84%E6%95%88%E6%9E%9C"><span class="toc-number">3.3.0.3.</span> <span class="toc-text">多次调用++实现+同样的效果</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%AD%E4%BB%A3%E5%99%A8%E7%9A%84%E5%B8%AE%E6%89%8B%E5%87%BD%E6%95%B0"><span class="toc-number">3.4.</span> <span class="toc-text">迭代器的帮手函数</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-std-next%EF%BC%9A%E8%8E%B7%E5%8F%96%E8%BF%AD%E4%BB%A3%E5%99%A8%E7%9A%84%E4%B8%8B%E4%B8%80%E4%B8%AA%E4%BD%8D%E7%BD%AE"><span class="toc-number">3.4.1.</span> <span class="toc-text">1. std::next：获取迭代器的下一个位置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-std-advance%EF%BC%9A%E5%B0%B1%E5%9C%B0%E7%A7%BB%E5%8A%A8%E8%BF%AD%E4%BB%A3%E5%99%A8"><span class="toc-number">3.4.2.</span> <span class="toc-text">2. std::advance：就地移动迭代器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-next-%E5%92%8C-advance-%E5%AF%B9%E8%B4%9F%E6%95%B0%E7%9A%84%E6%94%AF%E6%8C%81"><span class="toc-number">3.4.3.</span> <span class="toc-text">3. next 和 advance 对负数的支持</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-std-prev%EF%BC%9A%E5%90%91%E5%90%8E%E7%A7%BB%E5%8A%A8%E8%BF%AD%E4%BB%A3%E5%99%A8"><span class="toc-number">3.4.4.</span> <span class="toc-text">4. std::prev：向后移动迭代器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-std-distance%EF%BC%9A%E8%AE%A1%E7%AE%97%E4%B8%A4%E4%B8%AA%E8%BF%AD%E4%BB%A3%E5%99%A8%E4%B9%8B%E9%97%B4%E7%9A%84%E8%B7%9D%E7%A6%BB"><span class="toc-number">3.4.5.</span> <span class="toc-text">5. std::distance：计算两个迭代器之间的距离</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B3%A8%E6%84%8F%E4%B8%8A%E9%9D%A2%E6%89%80%E6%9C%89%E6%8F%90%E5%88%B0%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%80%9D%E6%83%B3%E9%83%BD%E6%98%AF%E4%BC%AA%E4%BB%A3%E7%A0%81"><span class="toc-number">3.4.6.</span> <span class="toc-text">注意上面所有提到的实现思想都是伪代码</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#inset-%E5%87%BD%E6%95%B0"><span class="toc-number">3.5.</span> <span class="toc-text">inset()函数</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%91set%E4%B8%AD%E6%8F%92%E5%85%A5%E5%85%83%E7%B4%A0"><span class="toc-number">3.5.1.</span> <span class="toc-text">向set中插入元素</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#insert-%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E8%BF%94%E5%9B%9E%E5%80%BC%EF%BC%9A%E6%8C%87%E5%90%91%E6%8F%92%E5%85%A5-%E7%8E%B0%E6%9C%89%E5%85%83%E7%B4%A0%E7%9A%84%E8%BF%AD%E4%BB%A3%E5%99%A8"><span class="toc-number">3.5.2.</span> <span class="toc-text">insert 的第一个返回值：指向插入&#x2F;现有元素的迭代器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#insert%E7%9A%84%E7%AC%AC%E4%BA%8C%E4%B8%AA%E8%BF%94%E5%9B%9E%E5%80%BC%EF%BC%9A%E6%98%AF%E5%90%A6%E6%8F%92%E5%85%A5%E6%88%90%E5%8A%9F"><span class="toc-number">3.5.3.</span> <span class="toc-text">insert的第二个返回值：是否插入成功</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%A1%A5%E5%85%85%E5%86%85%E5%AE%B9%EF%BC%9A"><span class="toc-number">3.5.4.</span> <span class="toc-text">补充内容：</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#find-%E5%87%BD%E6%95%B0"><span class="toc-number">3.6.</span> <span class="toc-text">find()函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#erase-%E5%87%BD%E6%95%B0"><span class="toc-number">3.7.</span> <span class="toc-text">erase()函数</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E6%8C%87%E5%AE%9A%E5%85%83%E7%B4%A0"><span class="toc-number">3.7.1.</span> <span class="toc-text">删除指定元素</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E6%8C%87%E5%AE%9A%E5%8C%BA%E9%97%B4%EF%BC%88%E9%9A%90%E6%82%A3%E6%93%8D%E4%BD%9C%EF%BC%89"><span class="toc-number">3.7.2.</span> <span class="toc-text">删除指定区间（隐患操作）</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%9A%90%E6%82%A3%E8%AD%A6%E5%91%8A%EF%BC%9A"><span class="toc-number">3.7.2.1.</span> <span class="toc-text">隐患警告：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-lower-bound-%E5%92%8C-upper-bound-%E5%87%BD%E6%95%B0"><span class="toc-number">3.7.2.2.</span> <span class="toc-text">使用 lower_bound() 和 upper_bound() 函数</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%AD%A3%E7%A1%AE%E4%BB%8E-set-%E4%B8%AD%E5%88%A0%E9%99%A4%E6%8C%87%E5%AE%9A%E8%8C%83%E5%9B%B4%E7%9A%84%E5%85%83%E7%B4%A0"><span class="toc-number">3.7.2.3.</span> <span class="toc-text">正确从 set 中删除指定范围的元素</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#set%E5%A2%9E%E5%88%A0%E6%94%B9%E6%9F%A5%E6%80%BB%E7%BB%93"><span class="toc-number">3.8.</span> <span class="toc-text">set增删改查总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#set-%E7%9A%84%E9%81%8D%E5%8E%86"><span class="toc-number">3.9.</span> <span class="toc-text">set()的遍历</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%8Ec%E8%AF%AD%E8%A8%80%E6%8C%87%E9%92%88%E5%88%B0%E8%BF%AD%E4%BB%A3%E5%99%A8"><span class="toc-number">3.9.1.</span> <span class="toc-text">从c语言指针到迭代器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8E%E8%8C%83%E5%9B%B4%E7%9A%84for%E5%BE%AA%E7%8E%AF"><span class="toc-number">3.9.2.</span> <span class="toc-text">基于范围的for循环</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#set-%E5%92%8C%E5%85%B6%E4%BB%96%E5%AE%B9%E5%99%A8%E4%B9%8B%E9%97%B4%E7%9A%84%E8%BD%AC%E6%8D%A2"><span class="toc-number">3.10.</span> <span class="toc-text">set 和其他容器之间的转换</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#set%E7%9A%84%E5%A6%99%E7%94%A8%EF%BC%9A%E6%8E%92%E5%BA%8F"><span class="toc-number">3.10.0.1.</span> <span class="toc-text">set的妙用：排序</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B8%85%E7%A9%BAset%E6%89%80%E6%9C%89%E5%85%83%E7%B4%A0"><span class="toc-number">3.11.</span> <span class="toc-text">清空set所有元素</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#set%E7%9A%84%E5%A4%A7%E5%B0%8F%EF%BC%88%E5%85%83%E7%B4%A0%E4%B8%AA%E6%95%B0%EF%BC%89"><span class="toc-number">3.12.</span> <span class="toc-text">set的大小（元素个数）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#multiset%EF%BC%9Aset%E7%9A%84%E4%B8%8D%E5%8E%BB%E9%87%8D%E7%89%88%E6%9C%AC"><span class="toc-number">4.</span> <span class="toc-text">multiset：set的不去重版本</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8D%E5%8E%BB%E9%87%8D%E7%9A%84set"><span class="toc-number">4.1.</span> <span class="toc-text">不去重的set</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E6%89%BEmultiset%E4%B8%AD%E7%9A%84%E7%AD%89%E5%80%BC%E5%8C%BA%E9%97%B4"><span class="toc-number">4.2.</span> <span class="toc-text">查找multiset中的等值区间</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A0%E9%99%A4-multiset-%E4%B8%AD%E7%9A%84%E7%AD%89%E5%80%BC%E5%85%83%E7%B4%A0"><span class="toc-number">4.3.</span> <span class="toc-text">删除 multiset 中的等值元素</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#multiset%E4%B8%AD%E7%AD%89%E5%80%BC%E5%85%83%E7%B4%A0%E4%B8%AA%E6%95%B0"><span class="toc-number">4.4.</span> <span class="toc-text">multiset中等值元素个数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#multiset-%E4%B8%AD%E7%9A%84find-%E5%87%BD%E6%95%B0"><span class="toc-number">4.5.</span> <span class="toc-text">multiset 中的find()函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#multiset%E5%A2%9E%E5%88%A0%E6%94%B9%E6%9F%A5%E6%93%8D%E4%BD%9C%E6%80%BB%E7%BB%93"><span class="toc-number">4.6.</span> <span class="toc-text">multiset增删改查操作总结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#unordered-set-%E6%97%A0%E5%BA%8F%E9%9B%86%E5%90%88"><span class="toc-number">5.</span> <span class="toc-text">unordered_set 无序集合</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#set-%E7%B3%BB%E5%88%97%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">set 系列成员函数总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E5%90%8C%E7%89%88%E6%9C%AC%E7%9A%84-set-%E5%AE%B9%E5%99%A8%E6%AF%94%E8%BE%83"><span class="toc-number">7.</span> <span class="toc-text">不同版本的 set 容器比较</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/08/21/%E9%9D%A2%E8%AF%95/resume/" title="无标题"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/18.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="无标题"/></a><div class="content"><a class="title" href="/2025/08/21/%E9%9D%A2%E8%AF%95/resume/" title="无标题">无标题</a><time datetime="2025-08-21T06:22:29.836Z" title="发表于 2025-08-21 14:22:29">2025-08-21</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/9.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AimRT官方示例解析"/></a><div class="content"><a class="title" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析">AimRT官方示例解析</a><time datetime="2025-05-17T16:00:00.000Z" title="发表于 2025-05-18 00:00:00">2025-05-18</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/01/04/%E6%9D%82%E9%A1%B9/sphinx%20%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/20.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="sphinx 使用指南"/></a><div class="content"><a class="title" href="/2025/01/04/%E6%9D%82%E9%A1%B9/sphinx%20%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南">sphinx 使用指南</a><time datetime="2025-01-03T16:00:00.000Z" title="发表于 2025-01-04 00:00:00">2025-01-04</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/19.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++协程入门"/></a><div class="content"><a class="title" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门">C++协程入门</a><time datetime="2024-11-19T16:00:00.000Z" title="发表于 2024-11-20 00:00:00">2024-11-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/8.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="深入浅出访存优化"/></a><div class="content"><a class="title" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化">深入浅出访存优化</a><time datetime="2024-11-09T16:00:00.000Z" title="发表于 2024-11-10 00:00:00">2024-11-10</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url(./img/文章封面/1.jpg);"><div id="footer-wrap"><div class="copyright">&copy;2023 - 2025 By Ming</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat-btn" type="button" title="聊天" style="display:none"><i class="fas fa-message"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
-  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
-  const option = null
+</article><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/10/21/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%B8%80%E3%80%81%E5%89%8D%E8%A8%80/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/5.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">全面理解STL-前言</div></div></a></div><div class="next-post pull-right"><a href="/2024/10/24/CPP/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC0%E7%AB%A0/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/7.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">CUDA开始的GPU编程-第0章</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2024/10/21/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%B8%80%E3%80%81%E5%89%8D%E8%A8%80/" title="全面理解STL-前言"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/5.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2024-10-21</div><div class="title">全面理解STL-前言</div></div></a></div><div><a href="/2024/10/21/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%BA%8C%E3%80%81vector%E5%AE%B9%E5%99%A8%E4%B8%8E%E8%BF%AD%E4%BB%A3%E5%99%A8%E5%85%A5%E9%97%A8/" title="全面理解STL-vector容器与迭代器入门"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/1.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2024-10-21</div><div class="title">全面理解STL-vector容器与迭代器入门</div></div></a></div><div><a href="/2024/10/21/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E5%9B%9B%E3%80%81string%E7%94%A8%E6%B3%95%E6%8C%87%E5%8D%97&%E6%BA%90%E7%A0%81%E5%88%A8%E6%9E%90/" title="全面理解STL-std::string用法指南&amp;源码刨析"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2024-10-21</div><div class="title">全面理解STL-std::string用法指南&amp;源码刨析</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="anzhiyufont anzhiyu-icon-comments"></i><span> 评论</span></div><div class="comment-randomInfo"><a onclick="anzhiyu.addRandomCommentInfo()" href="javascript:void(0)">匿名评论</a><a href="/privacy" style="margin-left: 4px">隐私政策</a></div><div class="comment-tips" id="comment-tips"><span>✅ 你无需删除空行，直接评论以获取最佳展示效果</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div><div class="comment-barrage"></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description">一个记录、分享自己学习过程的博客</div><div class="author-info__bottom-group"><a class="author-info__bottom-group-left" href="/"><h1 class="author-info__name">Ming</h1><div class="author-info__desc">MINGの部落格</div></a><div class="card-info-social-icons is-center"><a class="social-icon faa-parent animated-hover" href="https://github.com/MING-Z0/" target="_blank" title="Github"><i class="anzhiyufont anzhiyu-icon-github"></i></a><a class="social-icon faa-parent animated-hover" href="https://space.bilibili.com/484647453" target="_blank" title="BiliBili"><i class="anzhiyufont anzhiyu-icon-bilibili"></i></a></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%AD%E4%BB%A3%E5%99%A8%E7%9A%84%E5%88%86%E7%B1%BB"><span class="toc-number">1.</span> <span class="toc-text">迭代器的分类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E6%8A%80%E5%B7%A7"><span class="toc-number">2.</span> <span class="toc-text">小技巧</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#set%E5%AE%B9%E5%99%A8"><span class="toc-number">3.</span> <span class="toc-text">set容器</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#set%E5%92%8Cvector%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">3.1.</span> <span class="toc-text">set和vector的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#set%E7%9A%84%E6%8E%92%E5%BA%8F%EF%BC%9A"><span class="toc-number">3.2.</span> <span class="toc-text">set的排序：</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#string%E4%BC%9A%E6%8C%89%E2%80%9C%E5%AD%97%E5%85%B8%E5%BA%8F%E2%80%9D%E6%8E%92%E5%88%97"><span class="toc-number">3.2.1.</span> <span class="toc-text">string会按“字典序”排列</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E6%8E%92%E5%BA%8F%E5%87%BD%E6%95%B0"><span class="toc-number">3.2.2.</span> <span class="toc-text">自定义排序函数</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#set%E7%9A%84%E8%BF%AD%E4%BB%A3%E5%99%A8"><span class="toc-number">3.3.</span> <span class="toc-text">set的迭代器</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#set%E5%92%8Cvector%E8%BF%AD%E4%BB%A3%E5%99%A8%E7%9A%84%E7%9B%B8%E5%90%8C%E7%82%B9%EF%BC%9A"><span class="toc-number">3.3.0.1.</span> <span class="toc-text">set和vector迭代器的相同点：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#set%E5%92%8Cvector%E8%BF%AD%E4%BB%A3%E5%99%A8%E7%9A%84%E4%B8%8D%E5%90%8C%E7%82%B9%EF%BC%9A"><span class="toc-number">3.3.0.2.</span> <span class="toc-text">set和vector迭代器的不同点：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%A4%9A%E6%AC%A1%E8%B0%83%E7%94%A8-%E5%AE%9E%E7%8E%B0-%E5%90%8C%E6%A0%B7%E7%9A%84%E6%95%88%E6%9E%9C"><span class="toc-number">3.3.0.3.</span> <span class="toc-text">多次调用++实现+同样的效果</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%AD%E4%BB%A3%E5%99%A8%E7%9A%84%E5%B8%AE%E6%89%8B%E5%87%BD%E6%95%B0"><span class="toc-number">3.4.</span> <span class="toc-text">迭代器的帮手函数</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-std-next%EF%BC%9A%E8%8E%B7%E5%8F%96%E8%BF%AD%E4%BB%A3%E5%99%A8%E7%9A%84%E4%B8%8B%E4%B8%80%E4%B8%AA%E4%BD%8D%E7%BD%AE"><span class="toc-number">3.4.1.</span> <span class="toc-text">1. std::next：获取迭代器的下一个位置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-std-advance%EF%BC%9A%E5%B0%B1%E5%9C%B0%E7%A7%BB%E5%8A%A8%E8%BF%AD%E4%BB%A3%E5%99%A8"><span class="toc-number">3.4.2.</span> <span class="toc-text">2. std::advance：就地移动迭代器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-next-%E5%92%8C-advance-%E5%AF%B9%E8%B4%9F%E6%95%B0%E7%9A%84%E6%94%AF%E6%8C%81"><span class="toc-number">3.4.3.</span> <span class="toc-text">3. next 和 advance 对负数的支持</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-std-prev%EF%BC%9A%E5%90%91%E5%90%8E%E7%A7%BB%E5%8A%A8%E8%BF%AD%E4%BB%A3%E5%99%A8"><span class="toc-number">3.4.4.</span> <span class="toc-text">4. std::prev：向后移动迭代器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-std-distance%EF%BC%9A%E8%AE%A1%E7%AE%97%E4%B8%A4%E4%B8%AA%E8%BF%AD%E4%BB%A3%E5%99%A8%E4%B9%8B%E9%97%B4%E7%9A%84%E8%B7%9D%E7%A6%BB"><span class="toc-number">3.4.5.</span> <span class="toc-text">5. std::distance：计算两个迭代器之间的距离</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B3%A8%E6%84%8F%E4%B8%8A%E9%9D%A2%E6%89%80%E6%9C%89%E6%8F%90%E5%88%B0%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%80%9D%E6%83%B3%E9%83%BD%E6%98%AF%E4%BC%AA%E4%BB%A3%E7%A0%81"><span class="toc-number">3.4.6.</span> <span class="toc-text">注意上面所有提到的实现思想都是伪代码</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#inset-%E5%87%BD%E6%95%B0"><span class="toc-number">3.5.</span> <span class="toc-text">inset()函数</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%91set%E4%B8%AD%E6%8F%92%E5%85%A5%E5%85%83%E7%B4%A0"><span class="toc-number">3.5.1.</span> <span class="toc-text">向set中插入元素</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#insert-%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E8%BF%94%E5%9B%9E%E5%80%BC%EF%BC%9A%E6%8C%87%E5%90%91%E6%8F%92%E5%85%A5-%E7%8E%B0%E6%9C%89%E5%85%83%E7%B4%A0%E7%9A%84%E8%BF%AD%E4%BB%A3%E5%99%A8"><span class="toc-number">3.5.2.</span> <span class="toc-text">insert 的第一个返回值：指向插入&#x2F;现有元素的迭代器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#insert%E7%9A%84%E7%AC%AC%E4%BA%8C%E4%B8%AA%E8%BF%94%E5%9B%9E%E5%80%BC%EF%BC%9A%E6%98%AF%E5%90%A6%E6%8F%92%E5%85%A5%E6%88%90%E5%8A%9F"><span class="toc-number">3.5.3.</span> <span class="toc-text">insert的第二个返回值：是否插入成功</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%A1%A5%E5%85%85%E5%86%85%E5%AE%B9%EF%BC%9A"><span class="toc-number">3.5.4.</span> <span class="toc-text">补充内容：</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#find-%E5%87%BD%E6%95%B0"><span class="toc-number">3.6.</span> <span class="toc-text">find()函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#erase-%E5%87%BD%E6%95%B0"><span class="toc-number">3.7.</span> <span class="toc-text">erase()函数</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E6%8C%87%E5%AE%9A%E5%85%83%E7%B4%A0"><span class="toc-number">3.7.1.</span> <span class="toc-text">删除指定元素</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E6%8C%87%E5%AE%9A%E5%8C%BA%E9%97%B4%EF%BC%88%E9%9A%90%E6%82%A3%E6%93%8D%E4%BD%9C%EF%BC%89"><span class="toc-number">3.7.2.</span> <span class="toc-text">删除指定区间（隐患操作）</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%9A%90%E6%82%A3%E8%AD%A6%E5%91%8A%EF%BC%9A"><span class="toc-number">3.7.2.1.</span> <span class="toc-text">隐患警告：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-lower-bound-%E5%92%8C-upper-bound-%E5%87%BD%E6%95%B0"><span class="toc-number">3.7.2.2.</span> <span class="toc-text">使用 lower_bound() 和 upper_bound() 函数</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%AD%A3%E7%A1%AE%E4%BB%8E-set-%E4%B8%AD%E5%88%A0%E9%99%A4%E6%8C%87%E5%AE%9A%E8%8C%83%E5%9B%B4%E7%9A%84%E5%85%83%E7%B4%A0"><span class="toc-number">3.7.2.3.</span> <span class="toc-text">正确从 set 中删除指定范围的元素</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#set%E5%A2%9E%E5%88%A0%E6%94%B9%E6%9F%A5%E6%80%BB%E7%BB%93"><span class="toc-number">3.8.</span> <span class="toc-text">set增删改查总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#set-%E7%9A%84%E9%81%8D%E5%8E%86"><span class="toc-number">3.9.</span> <span class="toc-text">set()的遍历</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%8Ec%E8%AF%AD%E8%A8%80%E6%8C%87%E9%92%88%E5%88%B0%E8%BF%AD%E4%BB%A3%E5%99%A8"><span class="toc-number">3.9.1.</span> <span class="toc-text">从c语言指针到迭代器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8E%E8%8C%83%E5%9B%B4%E7%9A%84for%E5%BE%AA%E7%8E%AF"><span class="toc-number">3.9.2.</span> <span class="toc-text">基于范围的for循环</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#set-%E5%92%8C%E5%85%B6%E4%BB%96%E5%AE%B9%E5%99%A8%E4%B9%8B%E9%97%B4%E7%9A%84%E8%BD%AC%E6%8D%A2"><span class="toc-number">3.10.</span> <span class="toc-text">set 和其他容器之间的转换</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#set%E7%9A%84%E5%A6%99%E7%94%A8%EF%BC%9A%E6%8E%92%E5%BA%8F"><span class="toc-number">3.10.0.1.</span> <span class="toc-text">set的妙用：排序</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B8%85%E7%A9%BAset%E6%89%80%E6%9C%89%E5%85%83%E7%B4%A0"><span class="toc-number">3.11.</span> <span class="toc-text">清空set所有元素</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#set%E7%9A%84%E5%A4%A7%E5%B0%8F%EF%BC%88%E5%85%83%E7%B4%A0%E4%B8%AA%E6%95%B0%EF%BC%89"><span class="toc-number">3.12.</span> <span class="toc-text">set的大小（元素个数）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#multiset%EF%BC%9Aset%E7%9A%84%E4%B8%8D%E5%8E%BB%E9%87%8D%E7%89%88%E6%9C%AC"><span class="toc-number">4.</span> <span class="toc-text">multiset：set的不去重版本</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8D%E5%8E%BB%E9%87%8D%E7%9A%84set"><span class="toc-number">4.1.</span> <span class="toc-text">不去重的set</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E6%89%BEmultiset%E4%B8%AD%E7%9A%84%E7%AD%89%E5%80%BC%E5%8C%BA%E9%97%B4"><span class="toc-number">4.2.</span> <span class="toc-text">查找multiset中的等值区间</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A0%E9%99%A4-multiset-%E4%B8%AD%E7%9A%84%E7%AD%89%E5%80%BC%E5%85%83%E7%B4%A0"><span class="toc-number">4.3.</span> <span class="toc-text">删除 multiset 中的等值元素</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#multiset%E4%B8%AD%E7%AD%89%E5%80%BC%E5%85%83%E7%B4%A0%E4%B8%AA%E6%95%B0"><span class="toc-number">4.4.</span> <span class="toc-text">multiset中等值元素个数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#multiset-%E4%B8%AD%E7%9A%84find-%E5%87%BD%E6%95%B0"><span class="toc-number">4.5.</span> <span class="toc-text">multiset 中的find()函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#multiset%E5%A2%9E%E5%88%A0%E6%94%B9%E6%9F%A5%E6%93%8D%E4%BD%9C%E6%80%BB%E7%BB%93"><span class="toc-number">4.6.</span> <span class="toc-text">multiset增删改查操作总结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#unordered-set-%E6%97%A0%E5%BA%8F%E9%9B%86%E5%90%88"><span class="toc-number">5.</span> <span class="toc-text">unordered_set 无序集合</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#set-%E7%B3%BB%E5%88%97%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">set 系列成员函数总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E5%90%8C%E7%89%88%E6%9C%AC%E7%9A%84-set-%E5%AE%B9%E5%99%A8%E6%AF%94%E8%BE%83"><span class="toc-number">7.</span> <span class="toc-text">不同版本的 set 容器比较</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/6.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AimRT官方示例解析"/></a><div class="content"><a class="title" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析">AimRT官方示例解析</a><time datetime="2025-05-17T16:00:00.000Z" title="发表于 2025-05-18 00:00:00">2025-05-18</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/01/04/%E9%9A%8F%E8%AE%B0/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/5.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="sphinx 使用指南"/></a><div class="content"><a class="title" href="/2025/01/04/%E9%9A%8F%E8%AE%B0/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南">sphinx 使用指南</a><time datetime="2025-01-03T16:00:00.000Z" title="发表于 2025-01-04 00:00:00">2025-01-04</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++协程入门"/></a><div class="content"><a class="title" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门">C++协程入门</a><time datetime="2024-11-19T16:00:00.000Z" title="发表于 2024-11-20 00:00:00">2024-11-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/4.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="深入浅出访存优化"/></a><div class="content"><a class="title" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化">深入浅出访存优化</a><time datetime="2024-11-09T16:00:00.000Z" title="发表于 2024-11-10 00:00:00">2024-11-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/09/CPP/%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B/TBB%E5%BC%80%E5%90%AF%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%97%85/" title="TBB开启并行编程之旅"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TBB开启并行编程之旅"/></a><div class="content"><a class="title" href="/2024/11/09/CPP/%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B/TBB%E5%BC%80%E5%90%AF%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%97%85/" title="TBB开启并行编程之旅">TBB开启并行编程之旅</a><time datetime="2024-11-08T16:00:00.000Z" title="发表于 2024-11-09 00:00:00">2024-11-09</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div id="footer_deal"><a class="deal_link" href="/ming-zhanglu@outlook.com" title="email"><i class="anzhiyufont anzhiyu-icon-envelope"></i></a><img class="footer_mini_logo" title="返回顶部" alt="返回顶部" onclick="anzhiyu.scrollToDest(0, 500)" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/配置/头像.jpg" size="50px"/><a class="deal_link" target="_blank" rel="noopener" href="https://github.com/ming-z0" title="Github"><i class="anzhiyufont anzhiyu-icon-github"></i></a><a class="deal_link" target="_blank" rel="noopener" href="https://space.bilibili.com/484647453" title="Bilibili"><i class="anzhiyufont anzhiyu-icon-bilibili"></i></a></div><div id="workboard"><img class="workSituationImg boardsign" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@2.0.4/img/badge/安知鱼-上班摸鱼中.svg" alt="距离月入25k也就还差一个大佬带我~" title="距离月入25k也就还差一个大佬带我~"/><div id="runtimeTextTip"></div></div><p id="ghbdages"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" data-title="博客框架为Hexo_v5.4.0" title="博客框架为Hexo_v5.4.0"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@2.1.5/img/badge/Frame-Hexo.svg" alt="博客框架为Hexo_v5.4.0"/></a><a class="github-badge" target="_blank" href="https://blog.anheyu.com/" style="margin-inline:5px" data-title="本站使用AnZhiYu主题" title="本站使用AnZhiYu主题"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.9/img/Theme-AnZhiYu-2E67D3.svg" alt="本站使用AnZhiYu主题"/></a><a class="github-badge" target="_blank" href="https://github.com/" style="margin-inline:5px" data-title="本站项目由Github托管" title="本站项目由Github托管"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@2.1.5/img/badge/Source-Github.svg" alt="本站项目由Github托管"/></a></p></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2023 - 2025 By <a class="footer-bar-link" href="/" title="Ming" target="_blank">Ming</a></div></div><div id="footer-type-tips"></div><div class="js-pjax"><script>function subtitleType () {
+  getScript('https://sdk.jinrishici.com/v2/browser/jinrishici.js').then(() => {
+    jinrishici.load(result =>{
+      if (true) {
+        const sub = ["生活明朗&#44; 万物可爱&#44; 人间值得&#44; 未来可期."]
+        const content = result.data.content
+        sub.unshift(content)
+        window.typed = new Typed('#footer-type-tips', {
+          strings: sub,
+          startDelay: 300,
+          typeSpeed: 150,
+          loop: true,
+          backSpeed: 50,
+        })
+      } else {
+        document.getElementById('footer-type-tips').innerHTML = result.data.content
+      }
+    })
+  })
+}
+
+if (true) {
+  if (typeof Typed === 'function') {
+    subtitleType()
+  } else {
+    getScript('https://cdn.cbd.int/typed.js@2.1.0/dist/typed.umd.js').then(subtitleType)
+  }
+} else {
+  subtitleType()
+}
+</script></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">27</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">7</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://ming-blog.top/" title="MINGの部落格"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/配置/头像.jpg" alt="MINGの部落格"/><span class="back-menu-item-text">MINGの部落格</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://github.com/MING-Z0/" title="GitHub"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="GitHub"/><span class="back-menu-item-text">GitHub</span></a></div></div></div><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/archives/"><span> 隧道</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/categories/"><span> 分类</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/tags/"><span> 标签</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/link/"><span> 友人帐</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/about/"><span> 关于本人</span></a></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/AimRT/" style="font-size: 0.88rem;">AimRT<sup>1</sup></a><a href="/tags/CMake/" style="font-size: 0.88rem;">CMake<sup>2</sup></a><a href="/tags/CPP/" style="font-size: 0.88rem;">CPP<sup>21</sup></a><a href="/tags/CUDA/" style="font-size: 0.88rem;">CUDA<sup>10</sup></a><a href="/tags/STL/" style="font-size: 0.88rem;">STL<sup>5</sup></a><a href="/tags/%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97/" style="font-size: 0.88rem;">并行计算<sup>12</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/" style="font-size: 0.88rem;">开发环境<sup>1</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E8%AF%AD%E8%A8%80/" style="font-size: 0.88rem;">开发语言<sup>5</sup></a><a href="/tags/%E6%9C%BA%E5%99%A8%E4%BA%BA/" style="font-size: 0.88rem;">机器人<sup>1</sup></a><a href="/tags/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" style="font-size: 0.88rem;">访存优化<sup>1</sup></a><a href="/tags/%E9%9A%8F%E8%AE%B0/" style="font-size: 0.88rem;">随记<sup>5</sup></a><a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 0.88rem;">面试<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="anzhiyufont anzhiyu-icon-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="12875524711" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random" volume="0.5"></meting-js></div><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="anzhiyufont anzhiyu-icon-xmark"></i></button></nav><div class="is-center" id="loading-database"><i class="anzhiyufont anzhiyu-icon-spinner anzhiyu-pulse-icon"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div></div></div><div id="search-mask"></div></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://music.163.com/#/my/m/music/playlist?id=12875524711&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/medium-zoom@1.1.0/dist/medium-zoom.min.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.5/dist/lazyload.iife.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.cbd.int/pangu@4.0.7/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (false){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script async src="/anzhiyu/random.js"></script><script async="async">(function () {
+  var grt = new Date("04/01/2021 00:00:00"); //设置网站上线时间
+  var now = new Date();
+  var dnum;
+  var hnum;
+  var mnum;
+  var snum;
+  var nowHour;
+
+  // 计算并更新天数、小时数、分钟数和秒数
+  function updateTime() {
+    now = new Date(); // 更新 now 的值
+    nowHour = now.getHours(); // 更新 nowHour 的值
+    var days = (now - grt) / 1000 / 60 / 60 / 24;
+    dnum = Math.floor(days);
+    var hours = (now - grt) / 1000 / 60 / 60 - 24 * dnum;
+    hnum = Math.floor(hours);
+    if (String(hnum).length == 1) {
+      hnum = "0" + hnum;
+    }
+    var minutes = (now - grt) / 1000 / 60 - 24 * 60 * dnum - 60 * hnum;
+    mnum = Math.floor(minutes);
+    if (String(mnum).length == 1) {
+      mnum = "0" + mnum;
+    }
+    var seconds = (now - grt) / 1000 - 24 * 60 * 60 * dnum - 60 * 60 * hnum - 60 * mnum;
+    snum = Math.round(seconds);
+    if (String(snum).length == 1) {
+      snum = "0" + snum;
+    }
+  }
+
+  // 更新网页中显示的网站运行时间
+  function updateHtml() {
+    const footer = document.getElementById("footer");
+    if (!footer) return
+    let currentTimeHtml = "";
+    if (nowHour < 18 && nowHour >= 9) {
+      // 如果是上班时间，默认就是"安知鱼-上班摸鱼中.svg"图片，不需要更改
+      currentTimeHtml = `本站居然运行了 ${dnum} 天<span id='runtime'> ${hnum} 小时 ${mnum} 分 ${snum} 秒 </span><i class='anzhiyufont anzhiyu-icon-heartbeat' style='color:red'></i>`;
+    } else {
+      // 如果是下班时间，插入"安知鱼-下班啦.svg"图片
+      let img = document.querySelector("#workboard .workSituationImg");
+      if (img != null) {
+        img.src = "https://npm.elemecdn.com/anzhiyu-blog@2.0.4/img/badge/安知鱼-下班啦.svg";
+        img.title = "下班了就该开开心心的玩耍，嘿嘿~";
+        img.alt = "下班了就该开开心心的玩耍，嘿嘿~";
+      }
+
+      currentTimeHtml = `本站居然运行了 ${dnum} 天<span id='runtime'> ${hnum} 小时 ${mnum} 分 ${snum} 秒 </span><i class='anzhiyufont anzhiyu-icon-heartbeat' style='color:red'></i>`;
+    }
+
+    if (document.getElementById("runtimeTextTip")) {
+      document.getElementById("runtimeTextTip").innerHTML = currentTimeHtml;
+    }
+  }
+
+  setInterval(() => {
+    updateTime();
+    updateHtml();
+  }, 1000);
+})();</script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      tags: 'ams'
+    },
+    chtml: {
+      scale: 1.1
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, '']
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.cbd.int/mathjax@3.2.2/es5/tex-mml-chtml.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typesetPromise()
+}</script><script>(() => {
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
+      region: '',
+      onCommentLoaded: () => {
+        anzhiyu.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') setTimeout(runFn,0)
+    else getScript('https://cdn.cbd.int/twikoo@1.6.39/dist/twikoo.all.min.js').then(runFn)
+  }
 
   const getCount = () => {
     const countELement = document.getElementById('twikoo-count')
@@ -857,187 +1035,168 @@
     })
   }
 
-  const init = (el = document, path = location.pathname) => {
-    twikoo.init({
-      el: el.querySelector('#twikoo-wrap'),
-      envId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
-      region: '',
-      onCommentLoaded: () => {
-        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
-      },
-      ...option,
-      path: isShuoshuo ? path : (option && option.path) || path
-    })
-
+  const runFn = () => {
+    init();
     
-
-    isShuoshuo && (window.shuoshuoComment.destroyTwikoo = () => {
-      if (el.children.length) {
-        el.innerHTML = ''
-        el.classList.add('no-comment')
-      }
-    })
-  }
-
-  const loadTwikoo = (el, path) => {
-    if (typeof twikoo === 'object') setTimeout(() => init(el, path), 0)
-    else btf.getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(() => init(el, path))
-  }
-
-  if (isShuoshuo) {
-    'Twikoo' === 'Twikoo'
-      ? window.shuoshuoComment = { loadComment: loadTwikoo }
-      : window.loadOtherComment = loadTwikoo
-    return
   }
 
   if ('Twikoo' === 'Twikoo' || !false) {
-    if (false) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
-    else loadTwikoo()
+    if (false) anzhiyu.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else {
+      loadTwikoo()
+    }
   } else {
     window.loadOtherComment = loadTwikoo
   }
-})()</script><script>(() => {
-  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+})()</script><input type="hidden" name="page-type" id="page-type" value="post"></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
 
-  const loadLivere = (el, path) => {
-    window.livereOptions = {
-      refer: path || location.pathname
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[图片]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[链接]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[代码]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "无法获取评论，请确认相关配置是否正确"
+      })
     }
 
-    if (isShuoshuo) {
-      window.shuoshuoComment.destroyLivere = () => {
-        if (el.children.length) {
-          el.innerHTML = ''
-          el.classList.add('no-comment')
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.cbd.int/twikoo@1.6.39/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'data-lazy-src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'><div class='name'><span>${array[i].nick} </span></div></a>`
         }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <time datetime="${array[i].date}">${anzhiyu.diffDate(array[i].date, true)}</time></div>
+        </div>`
       }
+    } else {
+      result += '没有评论'
     }
 
-    if (typeof LivereTower === 'object') window.LivereTower.init()
-    else {
-      (function(d, s) {
-          var j, e = d.getElementsByTagName(s)[0];
-          if (typeof LivereTower === 'function') { return; }
-          j = d.createElement(s);
-          j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
-          j.async = true;
-          e.parentNode.insertBefore(j, e);
-      })(document, 'script');
-    }
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom && ($dom.innerHTML= result)
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
   }
 
-  if (isShuoshuo) {
-    'Twikoo' === 'Livere'
-      ? window.shuoshuoComment = { loadComment: loadLivere }
-      : window.loadOtherComment = loadLivere
-    return
-  }
-
-  if ('Twikoo' === 'Livere' || !false) {
-    if (false) btf.loadComment(document.getElementById('lv-container'), loadLivere)
-    else loadLivere()
-  } else {
-    window.loadOtherComment = loadLivere
-  }
-})()</script></div><div class="aplayer no-destroy" data-id="12875524711" data-server="netease" data-type="playlist" data-fixed="true" data-mini="true" data-volume="0.4" data-order="random" data-autoplay="true"> </div><script id="canvas_nest" defer="defer" color="97,255,145" opacity="0.7" zIndex="-1" count="88" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-nest.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = false;
-POWERMODE.shake = false;
-POWERMODE.mobile = false;
-document.body.addEventListener('input', POWERMODE);
-</script><script>(() => {
-  window.$crisp = ['safe', true]
-  window.CRISP_WEBSITE_ID = "b178ba69-5256-414b-adab-10306c2edf59"
-
-  btf.getScript('https://client.crisp.chat/l.js').then(() => {
-    const isChatBtn = true
-    const isChatHideShow = true
-
-    if (isChatBtn) {
-      const open = () => {
-        $crisp.push(["do", "chat:show"])
-        $crisp.push(["do", "chat:open"])
-      }
-
-      const close = () => $crisp.push(["do", "chat:hide"])
-
-      close()
-
-      $crisp.push(["on", "chat:closed", close])
-
-      window.chatBtnFn = () => $crisp.is("chat:visible") ? close() : open()
-
-      document.getElementById('chat-btn').style.display = 'block'
-    } else if (isChatHideShow) {
-      window.chatBtn = {
-        hide: () => $crisp.push(["do", "chat:hide"]),
-        show: () => $crisp.push(["do", "chat:show"])
-      }
-    }
-  })
-})()</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script>(() => {
-  const destroyAplayer = () => {
-    if (window.aplayers) {
-      for (let i = 0; i < window.aplayers.length; i++) {
-        if (!window.aplayers[i].options.fixed) {
-          window.aplayers[i].destroy()
-        }
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
       }
     }
   }
 
-  const runMetingJS = () => {
-    typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
-  }
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><script>var visitorMail = "visitor@ming.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><script src="/js/anzhiyu/right_click_menu.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["meta[property=\"og:image\"]","meta[property=\"og:title\"]","meta[property=\"og:url\"]","meta[property=\"og:type\"]","meta[property=\"og:site_name\"]","meta[property=\"og:description\"]","head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"]):not([href="/music/"]):not([href="/no-pjax/"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
 
-  btf.addGlobalFn('pjaxSend', destroyAplayer, 'destroyAplayer')
-  btf.addGlobalFn('pjaxComplete', loadMeting, 'runMetingJS')
-})()</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>(() => {
-  const pjaxSelectors = ["meta[property=\"og:image\"]","meta[property=\"og:title\"]","meta[property=\"og:url\"]","meta[property=\"og:description\"]","link[rel=\"canonical\"]","head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
 
-  window.pjax = new Pjax({
-    elements: 'a:not([target="_blank"])',
-    selectors: pjaxSelectors,
-    cacheBust: false,
-    analytics: false,
-    scrollRestoration: false
-  })
-
-  const triggerPjaxFn = (val) => {
-    if (!val) return
-    Object.values(val).forEach(fn => fn())
-  }
-
-  document.addEventListener('pjax:send', () => {
-    // removeEventListener
-    btf.removeGlobalFnEvent('pjaxSendOnce')
-    btf.removeGlobalFnEvent('themeChange')
-
-    // reset readmode
-    const $bodyClassList = document.body.classList
-    if ($bodyClassList.contains('read-mode')) $bodyClassList.remove('read-mode')
-
-    triggerPjaxFn(window.globalFn.pjaxSend)
-  })
-
-  document.addEventListener('pjax:complete', () => {
-    btf.removeGlobalFnEvent('pjaxCompleteOnce')
-    document.querySelectorAll('script[data-pjax]').forEach(item => {
-      const newScript = document.createElement('script')
-      const content = item.text || item.textContent || item.innerHTML || ""
-      Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
-      newScript.appendChild(document.createTextNode(content))
-      item.parentNode.replaceChild(newScript, item)
-    })
-
-    triggerPjaxFn(window.globalFn.pjaxComplete)
-  })
-
-  document.addEventListener('pjax:error', e => {
-    if (e.request.status === 404) {
-      const usePjax = true
-      false 
-        ? (usePjax ? pjax.loadUrl('/404.html') : window.location.href = '/404.html')
-        : window.location.href = e.request.responseURL
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
     }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
   })
-})()</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>

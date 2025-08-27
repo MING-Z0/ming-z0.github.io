@@ -1,198 +1,220 @@
-<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>C++协程入门 | MINGの部落格</title><meta name="author" content="Ming"><meta name="copyright" content="Ming"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta name="description" content="C++20协程入门什么是协程？简单来说：协程是一个可以暂停和恢复的函数。 如果从传统函数的角度来看，暂停意味着线程会停止执行。那么，协程与普通函数的区别在哪里呢？关键在于：  普通函数是线程紧密相关的，函数的状态依赖于线程栈； 协程是线程无关的，它的状态独立于任何线程，可以在不同的线程间切换。  为了更好地理解这一点，我们可以先回顾一下函数调用的机制。每当调用一个普通函数时，当前线程的栈会保存这个">
-<meta property="og:type" content="article">
-<meta property="og:title" content="C++协程入门">
-<meta property="og:url" content="https://ming-z0.github.io/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/index.html">
-<meta property="og:site_name" content="MINGの部落格">
-<meta property="og:description" content="C++20协程入门什么是协程？简单来说：协程是一个可以暂停和恢复的函数。 如果从传统函数的角度来看，暂停意味着线程会停止执行。那么，协程与普通函数的区别在哪里呢？关键在于：  普通函数是线程紧密相关的，函数的状态依赖于线程栈； 协程是线程无关的，它的状态独立于任何线程，可以在不同的线程间切换。  为了更好地理解这一点，我们可以先回顾一下函数调用的机制。每当调用一个普通函数时，当前线程的栈会保存这个">
-<meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/19.jpg">
-<meta property="article:published_time" content="2024-11-19T16:00:00.000Z">
-<meta property="article:modified_time" content="2025-05-29T08:25:09.006Z">
-<meta property="article:author" content="Ming">
-<meta property="article:tag" content="C++">
-<meta property="article:tag" content="协程">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/19.jpg"><script type="application/ld+json">{
-  "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  "headline": "C++协程入门",
-  "url": "https://ming-z0.github.io/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/",
-  "image": "https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/19.jpg",
-  "datePublished": "2024-11-19T16:00:00.000Z",
-  "dateModified": "2025-05-29T08:25:09.006Z",
-  "author": [
-    {
-      "@type": "Person",
-      "name": "Ming",
-      "url": "https://ming-z0.github.io"
-    }
-  ]
-}</script><link rel="shortcut icon" href="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg"><link rel="canonical" href="https://ming-z0.github.io/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
-    (() => {
-      
-    const saveToLocal = {
-      set: (key, value, ttl) => {
-        if (!ttl) return
-        const expiry = Date.now() + ttl * 86400000
-        localStorage.setItem(key, JSON.stringify({ value, expiry }))
-      },
-      get: key => {
-        const itemStr = localStorage.getItem(key)
-        if (!itemStr) return undefined
-        const { value, expiry } = JSON.parse(itemStr)
-        if (Date.now() > expiry) {
-          localStorage.removeItem(key)
-          return undefined
-        }
-        return value
-      }
-    }
-
-    window.btf = {
-      saveToLocal,
-      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
-        const script = document.createElement('script')
-        script.src = url
-        script.async = true
-        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
-        script.onload = script.onreadystatechange = () => {
-          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
-        }
-        script.onerror = reject
-        document.head.appendChild(script)
-      }),
-      getCSS: (url, id) => new Promise((resolve, reject) => {
-        const link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = url
-        if (id) link.id = id
-        link.onload = link.onreadystatechange = () => {
-          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
-        }
-        link.onerror = reject
-        document.head.appendChild(link)
-      }),
-      addGlobalFn: (key, fn, name = false, parent = window) => {
-        if (!true && key.startsWith('pjax')) return
-        const globalFn = parent.globalFn || {}
-        globalFn[key] = globalFn[key] || {}
-        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
-        parent.globalFn = globalFn
-      }
-    }
-  
-      
-      const activateDarkMode = () => {
-        document.documentElement.setAttribute('data-theme', 'dark')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
-        }
-      }
-      const activateLightMode = () => {
-        document.documentElement.setAttribute('data-theme', 'light')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
-        }
-      }
-
-      btf.activateDarkMode = activateDarkMode
-      btf.activateLightMode = activateLightMode
-
-      const theme = saveToLocal.get('theme')
-    
-          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
-        
-      
-      const asideStatus = saveToLocal.get('aside-status')
-      if (asideStatus !== undefined) {
-        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
-      }
-    
-      
-    const detectApple = () => {
-      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
-        document.documentElement.classList.add('apple')
-      }
-    }
-    detectApple()
-  
-    })()
-  </script><script>(function(c,l,a,r,i,t,y){
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>C++协程入门 | MINGの部落格</title><meta name="keywords" content="CPP,并行计算"><meta name="author" content="Ming"><meta name="copyright" content="Ming"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="C++协程入门"><meta name="application-name" content="C++协程入门"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="C++协程入门"><meta property="og:url" content="https://ming-z0.github.io/2024/11/20/CPP/CPP20协程/CPP20协程入门/index.html"><meta property="og:site_name" content="MINGの部落格"><meta property="og:description" content="C++20协程入门什么是协程？简单来说：协程是一个可以暂停和恢复的函数。 如果从传统函数的角度来看，暂停意味着线程会停止执行。那么，协程与普通函数的区别在哪里呢？关键在于：  普通函数是线程紧密相关的，函数的状态依赖于线程栈； 协程是线程无关的，它的状态独立于任何线程，可以在不同的线程间切换。  为"><meta property="og:locale" content="zh-CN"><meta property="og:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg"><meta property="article:author" content="Ming"><meta property="article:tag" content=" "><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg"><meta name="description" content="C++20协程入门什么是协程？简单来说：协程是一个可以暂停和恢复的函数。 如果从传统函数的角度来看，暂停意味着线程会停止执行。那么，协程与普通函数的区别在哪里呢？关键在于：  普通函数是线程紧密相关的，函数的状态依赖于线程栈； 协程是线程无关的，它的状态独立于任何线程，可以在不同的线程间切换。  为"><link rel="shortcut icon" href="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg"><link rel="canonical" href="https://ming-z0.github.io/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/"><link rel="preconnect" href="//cdn.cbd.int"/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.28/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/swiper/swiper.min.css" media="print" onload="this.media='all'"><script>(function(c,l,a,r,i,t,y){
     c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
     t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
     y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 })(window, document, "clarity", "script", "i5biwbw9sk");</script><script>const GLOBAL_CONFIG = {
+  linkPageTop: {"enable":true,"title":"无限进步","addFriendPlaceholder":"昵称（请勿包含博客等字样）：\n网站地址（要求博客地址，请勿提交个人主页）：\n头像图片url（请提供尽可能清晰的图片，我会上传到我自己的图床）：\n描述：\n站点截图（可选）：\n"},
+  peoplecanvas: undefined,
+  postHeadAiDescription: undefined,
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: {"enable":true,"default":"晚上好👋","list":[{"greeting":"晚安😴","startTime":0,"endTime":5},{"greeting":"早上好鸭👋, 祝你一天好心情！","startTime":6,"endTime":9},{"greeting":"上午好👋, 状态很好，鼓励一下～","startTime":10,"endTime":10},{"greeting":"11点多啦, 在坚持一下就吃饭啦～","startTime":11,"endTime":11},{"greeting":"午安👋, 休息休息吧！","startTime":12,"endTime":14},{"greeting":"🌈充实的一天辛苦啦！","startTime":14,"endTime":18},{"greeting":"19点喽, 奖励一顿丰盛的大餐吧🍔。","startTime":19,"endTime":19},{"greeting":"晚上好👋, 在属于自己的时间好好放松😌~","startTime":20,"endTime":24}]},
+  twikooEnvId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
+  commentBarrageConfig:undefined,
+  music_page_default: "nav_music",
   root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: {"mode":"cdn","api":"https://img2color-go.vercel.app/api?img=","cover_change":true},
+  authorStatus: undefined,
   algolia: undefined,
-  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":-1,"unescape":false,"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
-  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简"},
-  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":200,"highlightFullpage":true,"highlightMacStyle":true},
+  localSearch: {"path":"/search.xml","preload":false,"languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"距离上次更新已经过去了","messageNext":"天，文章的内容可能已经过时。"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
   copy: {
     success: '复制成功',
-    error: '复制失败',
+    error: '复制错误',
     noSupport: '浏览器不支持'
   },
   relativeDate: {
     homepage: false,
+    simplehomepage: true,
     post: false
   },
-  runtime: '',
-  dateSuffix: {
+  runtime: '天',
+  date_suffix: {
     just: '刚刚',
     min: '分钟前',
     hour: '小时前',
     day: '天前',
     month: '个月前'
   },
-  copyright: undefined,
-  lightbox: 'fancybox',
-  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
-  infinitegrid: {
-    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
-    buttonText: '加载更多'
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: Ming","link":"链接: ","source":"来源: MINGの部落格","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'mediumZoom',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
   },
   isPhotoFigcaption: true,
-  islazyloadPlugin: false,
+  islazyload: true,
   isAnchor: false,
-  percent: {
-    toc: true,
-    rightside: true,
-  },
-  autoDarkmode: false
+  shortcutKey: undefined,
+  autoDarkmode: true
 }</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: 'MINGの部落格',
   title: 'C++协程入门',
-  isHighlightShrink: false,
+  postAI: '',
+  pageFillDescription: 'C++20协程入门, 什么是协程？, 协程的优点, 实现一个协程, co_await 和 Awaitable, 预定义的Awaitable类型, 协程的返回类型与 promise_type, co_return, co_yield, 协程的生命周期, 自动释放：, 手动释放内存, initial_suspend() 的应用, 异常处理, 后记协程入门什么是协程简单来说协程是一个可以暂停和恢复的函数如果从传统函数的角度来看暂停意味着线程会停止执行那么协程与普通函数的区别在哪里呢关键在于普通函数是线程紧密相关的函数的状态依赖于线程栈协程是线程无关的它的状态独立于任何线程可以在不同的线程间切换为了更好地理解这一点我们可以先回顾一下函数调用的机制每当调用一个普通函数时当前线程的栈会保存这个函数的状态例如函数参数局部变量等这一过程通过栈顶指针的移动来完成例如函数调用的过程如下在这个过程中从地址到地址的内存空间分配给用来保存状态栈顶指针指向地址当调用时栈顶指针移到地址此时从地址到地址的内存空间分配给用于保存状态当执行完毕栈顶指针回到地址的状态被销毁内存空间被回收可以看出普通函数的状态完全依赖于线程栈一旦线程结束或切换函数的状态就不再存在因此我们说普通函数是线程相关的而协程不一样协程的状态是保存在堆内存中的假设是一个协程它的调用过程如下在这种情况下的状态会在堆上分配内存这个状态独立于线程栈传递给的参数会被复制到这个堆内存中局部变量也会直接在堆内存中创建当调用时栈顶指针依然向下移动给分配栈空间并在栈上存储一个指向堆状态的引用这样就像普通函数一样在栈上执行线程也可以访问到位于堆上的状态它的状态可以在堆内存中恢复如果协程需要暂停当前执行位置会保存在堆内存中而栈上的执行状态会被销毁栈空间被回收下一次恢复协程时堆内存中的暂停位置会被读取协程从中断点继续执行通过这种机制实现了一个可暂停和恢复执行的函数即协程总的来说协程和普通函数一样在执行时依赖于线程栈但一旦暂停协程的状态独立于线程栈保存在堆内存中此时协程与任何线程都没有直接关系调用它的线程可以继续执行其他任务协程的恢复也可以由同一线程或完全不同的线程来完成因此说协程是线程无关的协程的优点协程的最大优点之一是可以优化异步代码使得代码更简洁可读性更强举个例子假设我们有一个名为的组件它的功能是从一个访问速度较慢的设备上读取一个整数值因此它提供的是异步接口代码如下使用方法开启了一个新的线程来生成一个随机整数模拟异步操作为了获取的结果传统做法是使用回调函数当操作完成时通过回调通知使用者代码如下如果我们需要执行多个把它们的结果加起来再输出基于回调的代码会变得非常复杂代码不仅需要一层套一层还要在每层回调之间传递结果这就是俗称的回调地狱而使用协程后这个问题迎刃而解我们可以像下面这样使用协程调用这段代码清晰简洁看起来就像是同步调用每当协程遇到时它会暂停直到完成操作然后从暂停的地方恢复执行接下来我们将展示如何实现这一效果实现一个协程在中只要一个函数体内使用了或中的任何一个操作符那么这个函数就会被视为协程我们先来关注一下操作符和的作用是让协程暂停等待某个异步操作完成后再恢复执行在前面的协程示例中我们对调用了但实际上这段代码不能正常编译因为是我们自定义的类型编译器并不知道它什么时候完成操作也不知道如何获取操作结果为了让编译器理解我们的类型定义了一个协议规范要求自定义类型实现一定的函数这样就可以在中使用它这个规范被称为可等待对象它要求对象实现以下几个关键函数返回类型为协程在执行时会首先调用来检查操作是否已经完成如果返回则表示异步操作已完成协程不需要暂停可以直接继续执行如果返回则协程会暂停等待异步操作完成需要实现的原因是异步调用的时序通常是不确定的如果异步操作在执行之前已经完成那么就应该跳过暂停步骤直接继续执行此时会返回协程就会立即恢复执行避免不必要的暂停该函数接收一个类型为的参数返回类型可以是或如果返回说明协程需要暂停那么接下来会调用该函数的主要作用是接收协程的句柄并在异步操作完成时通过调用这个句柄的方法来恢复协程的执行协程句柄类似于函数指针它代表一个协程实例我们可以通过句柄来控制该协程的恢复执行需要注意的是的实现不仅可以启动异步操作还可以管理协程的恢复机制它确保在异步操作完成时协程能够正确地恢复执行的返回类型通常是但是也可以是当返回类型是时返回值控制协程是否真的暂停具体来说当返回时协程将不会暂停而是继续执行这提供了一个二次控制点允许在协程暂停之前基于某些条件决定是否阻止暂停返回会让协程直接继续执行跳过暂停返回类型可以是或其他类型它的返回值就是操作符的结果当协程恢复执行时或者当不需要暂停时会被调用当协程恢复执行时或者当不需要暂停时会被调用如果协程暂停了会在协程恢复时提供暂停点后的数据从而允许我们获取异步操作的结果比如可以返回异步操作的结果或者返回其他需要传递给协程后的值接下来我们修改使其符合规范以下是完整的示例代码当前线程打印协程调用的线程协程总是需要暂停打印协程暂停时的线程在协程暂停时启动一个新线程进行异步操作异步线程执行打印新线程的线程生成一个随机数随机数生成完毕后恢复协程打印协程恢复执行时的线程返回异步操作的结果用于保存随机数打印协程开始执行时的线程暂停等待异步操作完成再次暂停等待第二个异步操作完成再次暂停等待第三个异步操作完成总和输出总和主线程开始打印主线程开始时的线程调用协程阻止主线程退出我们先忽略返回类型下文会专门介绍协程的返回类型关键点解释该函数总是返回意味着协程总是需要暂停等待异步操作完成在中我们启动了一个子线程来执行异步操作子线程生成随机数之后保存在成员变量中然后调用协程句柄的函数来恢复协程执行当协程恢复执行时会返回生成的随机数并且这个值会成为操作的结果返回执行流程在中我们调用了并进入协程当协程执行到时它会暂停等待的异步操作完成此时主线程返回继续等待用户输入中的子线程生成一个随机数并通过协程句柄恢复协程执行当协程恢复时执行到第二个然后暂停再由中的子线程恢复协程以此类推第三个会再次暂停并由中的子线程恢复协程最终输出随机数的总和这里的关键点是哪个线程调用协程句柄的就由哪个线程恢复协程执行可以使用打印线程在中设置断点来观察这个程序的执行流程以便更好地理解预定义的类型标准库中预定义了两个符合规范的类型和顾名思义表示协程不暂停而表示协程总是暂停实际上它们的区别仅在于函数的返回值返回表示协程不需要暂停直接继续执行返回表示协程需要暂停等待异步操作完成后再恢复除此之外这两个类型的和函数实现是空的因此它们仅用于控制协程在某些时机是否暂停并不涉及实际的异步操作这两个类型主要作为工具类常用于中用来指定协程挂起和恢复的行为接下来我们将详细介绍的作用和实现下文会详细介绍协程的返回类型与对协程的返回类型只有一个基本要求返回类型必须包含一个名为的嵌套类型与前面介绍的一样也需要遵循的规范定义一系列特定的函数是协程的一部分当协程被调用时会在堆上为协程的状态分配空间并同时创建一个对应的对象通过该对象中定义的函数我们可以与协程进行数据交互并控制协程的行为要实现的第一个函数是它用于创建协程的返回值在协程内部我们不需要显式地创建返回值编译器会隐式地调用来创建返回值并返回给调用者这个过程可能看起来有些奇怪虽然是返回类型的嵌套类型但编译器并不会直接创建返回值而是先创建一个对象然后通过该对象创建返回值那么协程的返回值有什么用呢这取决于协程的设计意图具体取决于如何希望协程与调用者进行交互例如在上文的示例中协程只是输出一个整数并不需要与调用者有任何交互因此它的返回值可以是一个空类型如果我们希望实现一个协程该协程需要返回一个整数给调用者并由调用者进行输出那么我们就需要对协程的返回类型进行一些修改以便能够传递数据接下来我们将协程修改为并使用操作符从协程中返回数据如下所示等价于即返回的数据会通过函数传递给对象因此必须实现这个函数以接收数据此外还需要确保返回类型能访问到这个数据为了减少数据传递我们可以在和之间共享同一份数据下面是修改后的完整示例始终暂停协程在协程暂停时启动一个新线程执行异步操作生成随机数完成后恢复协程执行返回异步操作的结果用于存储随机数返回对象将值存储到共享数据中存储协程返回值的智能指针返回协程计算结果共享的数据返回总和启动协程输出协程返回的值我们通过在和之间共享数据当创建时它会将中的智能指针传递给这样它们就能访问到同一个数据然后协程内部通过函数将结果写入共享数据而则通过读取并返回该数据异步是具有传染性的由于协程内部使用了异步操作它本身也是一个异步操作为了等待协程执行完成我们将放在循环中在每次用户输入时输出当前结果这是一个简单的示例程序缺乏异步同步机制所以通过通过等待用户输入来间接等待协程的执行在实际应用中协程的返回类型通常需要提供更多的同步机制以支持回调通知等机制使得协程的行为与传统的异步操作一致因此协程的优点主要体现在它的对内的代码逻辑而不是对外的使用方式协程的返回类型也可以实现规范这样它就可以作为另一个协程的对象从而支持更复杂的协程链式调用这样一来调用协程的也必须是协程这样层层往上传递直到遇到不能改成协程的函数为止例如函数与普通的一样也可以不带任何参数在这种情况下协程会以没有数据的方式返回相当于调用了需要手动定义这个函数以支持不带数据的返回如果在协程结束时没有显式调用编译器会隐式添加一个不带参数的调用在协程中用于结束协程就像普通函数中的一样调用后协程实例的内存会被释放协程也不能再继续执行如果我们希望在协程中多次返回数据而不中止协程执行可以使用操作符的作用是返回数据并暂停协程等待下一次恢复具体来说等价于传递给的参数会被传给的函数而的返回值将传给上面我们提到传给的参数要符合规范所以的返回类型也要满足规范通常我们使用预定义的让协程在每次调用时都暂停为了演示如何使用我们再次修改示例程序使其在用户输入时每次从协程中取出一个值并输出然后继续生成下一个值以下是修改后的完整示例代码线程线程当前线程线程即将恢复协程线程分离线程操作符的返回值协程恢复时执行线程返回值函数可以通过对象获取与之关联的协程句柄将获取的协程句柄作为参数传递给构造函数操作符的返回值当前线程生成值初始化完成后会调用这个函数决定协程在创建之后是否立即挂起当前线程当前线程当前线程构造函数参数为协程句柄通过句柄得到协程的对象从而得到协程的值当前线程收到输入恢复协程主线程当前协程值恢复协程这个示例修改的比较多我们逐步分析首先中的随机数生成被改为递增整数这样更容易观察到协程的暂停与恢复效果接着类增加了一个方法用来通过调用协程句柄恢复协程的执行这意味着需要持有协程句柄这个句柄通过中的方法传递给的函数可以通过对象获取与之关联的协程句柄反之协程句柄上也有一个函数可以获取对应的对象他们是可以互相转换的所以在和之间就不需要使用来共享数据通过协程句柄就能访问到对象像下面这样直接取数据就可以了需要注意的是协程句柄的模板类型在前面的例子中协程句柄的类型是不带模板参数而在这个例子中协程句柄的类型是模板参数中填入了类型这个区别类似于指针和前者是无类型的后者是强类型的两种类型的协程句柄本质上是相同的东西指向同一个协程实例都可以恢复协程执行但只有强类型的才能调用获取到对象然后协程被修改为一个无限循环每次通过获取一个整数并通过返回该整数由于协程具有暂停和恢复的特性可以在无限循环中执行而不会像普通函数那样让线程在里面死循环最后中的函数用于处理返回的数据为了确保协程在每次后暂停我们将的返回类型设为使协程在每次返回数据后都暂停等待恢复协程的生命周期我们一开始提到会在堆上为协程分配状态内存并且必须确保这些内存会在适当的时机被释放否则会造成内存泄漏释放协程的内存可以通过自动释放或手动释放两种方式来实现自动释放当协程正常结束时如果没有干预会自动释放协程的内存协程结束的标志是调用了此时协程实例会销毁释放状态以下是自动释放的示例没有出现语句编译器会在末尾隐式地加上自动释放的方式有时候并不是我们想要的参考下面这个例子存储协程返回的值协程句柄返回在这个例子中协程通过返回了给通过协程句柄获取并访问该值但是运行程序发现输出的值并不是而是随机值或者会触发地址访问错误这个现象的原因是协程在返回之后就被自动释放了也跟着被一起释放了此时在内部持有的协程句柄已经变成了野指针指向一块已经被释放的内存所以访问这个协程句柄的任何行为都会是未定义行为手动释放内存解决这个问题的方法是将中的返回类型从改为协程在结束的时候会调用来决定是否暂停如果这个函数返回了要暂停那么协程不会自动释放此时协程句柄还是有效的可以安全访问它内部的数据返回暂停标志防止协程自动释放不过这时候释放协程就变成我们的责任了必须在适当的时机调用协程句柄上的函数来手动释放这个协程可以在的析构函数中做这个事情手动销毁协程只要协程处于暂停状态即没有被自动销毁我们就可以调用来释放内存对于像无限循环这样的协程手动销毁内存是必须的因为协程可能会在暂停状态下长时间存在的应用与类似用于决定协程开始执行时是否立即暂停默认情况下返回即协程一开始就立即执行我们可以将这个函数的返回类型改成使协程一开始就进入暂停状态直到我们显式恢复它实现协程延迟执行的效果例如批量管理协程句柄之后需要的时候统一启动延迟协程执行直到我们显式恢复异常处理协程的异常处理与普通函数有些不同因为协程本身是在一个异步的上下文中执行的编译器会自动生成一些代码来处理协程中的异常确保协程在异常发生时能够正确地结束并执行必要的清理工作下面是一个伪代码示例展示了协程的执行过程和异常处理机制协程开始时可能会暂停协程的主体代码捕获未处理的异常协程结束时可能会暂停协程开始执行时调用决定协程是否暂停通常返回表示不暂停或者表示暂停异常捕获如果协程在执行过程中抛出异常异常会被捕获并传递给的方法协程结束时调用决定协程是否在结束前暂停标准要求必须是因此在中不能抛出异常举个栗子这是一段包含抛出异常的示例代码模拟一些操作可能会抛出异常这个代码不会执行这是编译器处理后生成的伪代码调用来检查是否暂停协程协程的主体代码可能会抛出异常这里抛出异常如果协程体内发生异常转交给的进行处理捕获异常并进行处理在协程外部捕获的异常可以选择在主程序中处理协程结束时调用决定是否暂停解释块编译器会将协程体的执行过程包裹在块中会触发和方法的调用抛出异常当协程中抛出异常时异常会被传递到外层的语句中如果该异常未在协程体内部处理它会被转交给方法来进行处理当异常未被处理时被调用可以在这里执行必要的异常清理工作协程结束时调用这是最后的暂停点确保协程的状态可以被正确清理协程主要的执行代码都被包裹假如抛出了未处理的异常的函数会被调用我们可以在这个函数里面做对应的异常处理由于这个函数是在语句中调用的我们可以在函数内调用函数获取异常对象也可以调用重新抛出异常调用了之后协程就结束了接下来会继续调用与正常结束协程的流程一样标准规定必须定义成也就是说它不允许抛出任何异常后记至此我们介绍完了协程的基础内容可以感觉到的协程仍然只提供了一些基础功能使用起来并不友好要想在实际的开发中使用上协程还有比较长的路我们可以自己动手对它进行封装或者使用第三方库的或者期待未来的标准带来更高层封装的协程组件',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: true,
   isToc: true,
-  pageType: 'post'
-}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
-  const $loadingBox = document.getElementById('loading-box')
-  const $body = document.body
-  const preloader = {
-    endLoading: () => {
-      $body.style.overflow = ''
-      $loadingBox.classList.add('loaded')
-    },
-    initLoading: () => {
-      $body.style.overflow = 'hidden'
-      $loadingBox.classList.remove('loaded')
-    }
+  postUpdate: '2025-08-27 21:28:44',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
   }
 
-  preloader.initLoading()
-  window.addEventListener('load', preloader.endLoading)
-
-  if (true) {
-    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
-    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
   }
-})()</script><div id="web_bg" style="background-image: url(/img/配置/背景.jpg);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">28</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">15</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">9</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 分析</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E6%A0%87%E7%AD%BE/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/%E5%88%86%E7%B1%BB/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fa fa-archive"></i><span> 档案室</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fa fa-user"></i><span> 我的</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E5%8F%8B%E9%93%BE/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 收藏</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1VB4y137ys/"><i class="fa-fw fas fa-heart"></i><span> ROS2理论与实践</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1if4y147hS/"><i class="fa-fw fas fa-heart"></i><span> 动手学深度学习</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://geek-logic.com/"><i class="fa-fw fas fa-heart"></i><span> Geek Logic</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://github.com/parallel101/cppguidebook"><i class="fa-fw fas fa-heart"></i><span> 小彭老师C++大典</span></a></li><li><a class="site-page child" href="/unpublished/ROS2%E7%90%86%E8%AE%BA%E4%B8%8E%E5%AE%9E%E8%B7%B5%E2%80%94%E2%80%94%E6%A0%B8%E5%BF%83%E7%AF%87/"><i class="fa-fw fas fa-heart"></i><span> ROS2</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/%E5%85%B3%E4%BA%8E/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(./img/文章封面/19.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">MINGの部落格</span></a><a class="nav-page-title" href="/"><span class="site-name">C++协程入门</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 分析</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E6%A0%87%E7%AD%BE/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/%E5%88%86%E7%B1%BB/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fa fa-archive"></i><span> 档案室</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fa fa-user"></i><span> 我的</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E5%8F%8B%E9%93%BE/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 收藏</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1VB4y137ys/"><i class="fa-fw fas fa-heart"></i><span> ROS2理论与实践</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1if4y147hS/"><i class="fa-fw fas fa-heart"></i><span> 动手学深度学习</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://geek-logic.com/"><i class="fa-fw fas fa-heart"></i><span> Geek Logic</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://github.com/parallel101/cppguidebook"><i class="fa-fw fas fa-heart"></i><span> 小彭老师C++大典</span></a></li><li><a class="site-page child" href="/unpublished/ROS2%E7%90%86%E8%AE%BA%E4%B8%8E%E5%AE%9E%E8%B7%B5%E2%80%94%E2%80%94%E6%A0%B8%E5%BF%83%E7%AF%87/"><i class="fa-fw fas fa-heart"></i><span> ROS2</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/%E5%85%B3%E4%BA%8E/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">C++协程入门</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-11-19T16:00:00.000Z" title="发表于 2024-11-20 00:00:00">2024-11-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-05-29T08:25:09.006Z" title="更新于 2025-05-29 16:25:09">2025-05-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/C/">C++</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">8k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>29分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="C-20协程入门"><a href="#C-20协程入门" class="headerlink" title="C++20协程入门"></a>C++20协程入门</h2><h3 id="什么是协程？"><a href="#什么是协程？" class="headerlink" title="什么是协程？"></a>什么是协程？</h3><p>简单来说：<strong>协程是一个可以暂停和恢复的函数</strong>。</p>
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 7.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><div class="back-home-button"><i class="anzhiyufont anzhiyu-icon-grip-vertical"></i><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://ming-blog.top/" title="MINGの部落格"><img class="back-menu-item-icon" src="/img/配置/头像.jpg" alt="MINGの部落格"/><span class="back-menu-item-text">MINGの部落格</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://github.com/MING-Z0/" title="GitHub"><img class="back-menu-item-icon" src="https://image.anheyu.com/favicon.ico" alt="GitHub"/><span class="back-menu-item-text">GitHub</span></a></div></div></div></div><a id="site-name" href="/" accesskey="h"><div class="title">MINGの部落格</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/archives/"><span> 隧道</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/categories/"><span> 分类</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/tags/"><span> 标签</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/link/"><span> 友人帐</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/about/"><span> 关于本人</span></a></div></div></div><div id="nav-right"><div class="nav-button only-home" id="travellings_button" title="随机前往一个开往项目网站"><a class="site-page" onclick="anzhiyu.totraveling()" title="随机前往一个开往项目网站" href="javascript:void(0);" rel="external nofollow" data-pjax-state="external"><i class="anzhiyufont anzhiyu-icon-train"></i></a></div><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><div class="nav-button" id="search-button"><a class="site-page social-icon search" href="javascript:void(0);" title="搜索🔍" accesskey="s"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span> 搜索</span></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="/./img/%E6%89%93%E8%B5%8F/wechat.jpg" target="_blank"><img class="post-qr-code-img" alt="微信" src="/./img/%E6%89%93%E8%B5%8F/wechat.jpg"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/AimRT/" style="font-size: 1.05rem;">AimRT<sup>1</sup></a><a href="/tags/CMake/" style="font-size: 1.05rem;">CMake<sup>2</sup></a><a href="/tags/CPP/" style="font-size: 1.05rem;">CPP<sup>21</sup></a><a href="/tags/CUDA/" style="font-size: 1.05rem;">CUDA<sup>10</sup></a><a href="/tags/STL/" style="font-size: 1.05rem;">STL<sup>5</sup></a><a href="/tags/%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97/" style="font-size: 1.05rem;">并行计算<sup>12</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/" style="font-size: 1.05rem;">开发环境<sup>1</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E8%AF%AD%E8%A8%80/" style="font-size: 1.05rem;">开发语言<sup>5</sup></a><a href="/tags/%E6%9C%BA%E5%99%A8%E4%BA%BA/" style="font-size: 1.05rem;">机器人<sup>1</sup></a><a href="/tags/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" style="font-size: 1.05rem;">访存优化<sup>1</sup></a><a href="/tags/%E9%9A%8F%E8%AE%B0/" style="font-size: 1.05rem;">随记<sup>5</sup></a><a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 1.05rem;">面试<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2025/05/"><span class="card-archive-list-date">五月 2025</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2025/01/"><span class="card-archive-list-date">一月 2025</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2024/11/"><span class="card-archive-list-date">十一月 2024</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">6</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2024/10/"><span class="card-archive-list-date">十月 2024</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">15</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/12/"><span class="card-archive-list-date">十二月 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">4</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="post-meta-categories"><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-inbox post-meta-icon"></i><a class="post-meta-categories" href="/categories/CPP/" itemprop="url">CPP</a></span><span class="article-meta tags"><a class="article-meta__tags" href="/tags/CPP/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>CPP</span></a><a class="article-meta__tags" href="/tags/%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>并行计算</span></a></span></div></div><h1 class="post-title" itemprop="name headline">C++协程入门</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2024-11-19T16:00:00.000Z" title="发表于 2024-11-20 00:00:00">2024-11-20</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2025-08-27T13:28:44.072Z" title="更新于 2025-08-27 21:28:44">2025-08-27</time></span></div><div class="meta-secondline"><span class="post-meta-separator"></span><span class="post-meta-wordcount"><i class="anzhiyufont anzhiyu-icon-file-word post-meta-icon" title="文章字数"></i><span class="post-meta-label" title="文章字数">字数总计:</span><span class="word-count" title="文章字数">8k</span><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-clock post-meta-icon" title="阅读时长"></i><span class="post-meta-label" title="阅读时长">阅读时长:</span><span>29分钟</span></span><span class="post-meta-separator"></span><span class="post-meta-pv-cv" id="" data-flag-title="C++协程入门"><i class="anzhiyufont anzhiyu-icon-fw-eye post-meta-icon"></i><span class="post-meta-label" title="阅读量">阅读量:</span><span id="busuanzi_value_page_pv"><i class="anzhiyufont anzhiyu-icon-spinner anzhiyu-spin"></i></span></span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg"></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://ming-z0.github.io/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/"><header><a class="post-meta-categories" href="/categories/CPP/" itemprop="url">CPP</a><a href="/tags/CPP/" tabindex="-1" itemprop="url">CPP</a><a href="/tags/%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97/" tabindex="-1" itemprop="url">并行计算</a><h1 id="CrawlerTitle" itemprop="name headline">C++协程入门</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">Ming</span><time itemprop="dateCreated datePublished" datetime="2024-11-19T16:00:00.000Z" title="发表于 2024-11-20 00:00:00">2024-11-20</time><time itemprop="dateCreated datePublished" datetime="2025-08-27T13:28:44.072Z" title="更新于 2025-08-27 21:28:44">2025-08-27</time></header><h2 id="C-20协程入门"><a href="#C-20协程入门" class="headerlink" title="C++20协程入门"></a>C++20协程入门</h2><h3 id="什么是协程？"><a href="#什么是协程？" class="headerlink" title="什么是协程？"></a>什么是协程？</h3><p>简单来说：<strong>协程是一个可以暂停和恢复的函数</strong>。</p>
 <p>如果从传统函数的角度来看，暂停意味着线程会停止执行。那么，协程与普通函数的区别在哪里呢？关键在于：</p>
 <ul>
 <li><strong>普通函数</strong>是线程紧密相关的，函数的状态依赖于线程栈；</li>
 <li><strong>协程</strong>是线程无关的，它的状态独立于任何线程，可以在不同的线程间切换。</li>
 </ul>
 <p>为了更好地理解这一点，我们可以先回顾一下函数调用的机制。每当调用一个普通函数时，当前线程的栈会保存这个函数的状态（例如函数参数、局部变量等）。这一过程通过栈顶指针的移动来完成。例如，函数 <code>Foo()</code> 调用 <code>Bar()</code> 的过程如下：</p>
-<p><img src="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/%E8%B0%83%E7%94%A8%E8%BF%87%E7%A8%8B.png" alt="调用过程" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/%E8%B0%83%E7%94%A8%E8%BF%87%E7%A8%8B.png" alt="调用过程"></p>
 <p>在这个过程中：</p>
 <ul>
 <li>从 <code>地址3</code> 到 <code>地址2</code> 的内存空间分配给 <code>Foo()</code> 用来保存状态，栈顶指针指向 <code>地址2</code>；</li>
@@ -201,7 +223,7 @@
 </ul>
 <p>可以看出，普通函数的状态完全依赖于线程栈，一旦线程结束或切换，函数的状态就不再存在，因此我们说普通函数是线程相关的。</p>
 <p>而协程不一样，协程的状态是保存在堆内存中的。假设 <code>Bar()</code> 是一个协程，它的调用过程如下：</p>
-<p><img src="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/image-20250104014927014.png" alt="image-20250104014927014" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/image-20250104014927014.png" alt="image-20250104014927014"></p>
 <p>在这种情况下：</p>
 <ul>
 <li><code>Bar()</code> 的状态会在堆上分配内存，这个状态独立于线程栈；</li>
@@ -266,7 +288,7 @@
 <h4 id="协程的返回类型与-promise-type"><a href="#协程的返回类型与-promise-type" class="headerlink" title="协程的返回类型与 promise_type"></a>协程的返回类型与 <code>promise_type</code></h4><p>C++ 对协程的返回类型只有一个基本要求：返回类型必须包含一个名为 <code>promise_type</code> 的嵌套类型。</p>
 <p>与前面介绍的 Awaitable 一样， <code>promise_type</code> 也需要遵循 C++ 的规范，定义一系列特定的函数。<code>promise_type</code> 是协程的一部分，当协程被调用时，会在堆上为协程的状态分配空间，并同时创建一个对应的 <code>promise_type</code> 对象。通过该对象中定义的函数，我们可以与协程进行数据交互并控制协程的行为。</p>
 <p><code>promise_type</code> 要实现的第一个函数是 <strong><code>get_return_object()</code></strong> 它用于创建协程的<strong>返回值</strong>。在协程内部我们不需要显式地创建返回值，编译器会隐式地调用 <code>get_return_object()</code> 来创建返回值并返回给调用者。这个过程可能看起来有些奇怪——虽然 <code>promise_type</code> 是返回类型的嵌套类型，但编译器并不会直接创建返回值，而是先创建一个 <code>promise_type</code> 对象，然后通过该对象创建返回值。</p>
-<p><img src="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/image-20241119154912654.png" alt="image-20241119154912654" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/image-20241119154912654.png" alt="image-20241119154912654"></p>
 <p>那么，协程的返回值有什么用呢？这取决于协程的设计意图，具体取决于如何希望协程与调用者进行交互。</p>
 <p>例如，在上文的示例中，<code>PrintInt()</code> 协程只是输出一个整数，并不需要与调用者有任何交互，因此它的返回值可以是一个空类型。 如果我们希望实现一个 <code>GetInt()</code> 协程，该协程需要返回一个整数给调用者，并由调用者进行输出，那么我们就需要对协程的返回类型进行一些修改，以便能够传递数据。</p>
 <h4 id="co-return"><a href="#co-return" class="headerlink" title="co_return"></a>co_return</h4><p>接下来，我们将 <code>PrintInt()</code> 协程修改为 <code>GetInt()</code>，并使用 <strong><code>co_return</code></strong> 操作符从协程中返回数据，如下所示：</p>
@@ -274,7 +296,7 @@
 
 <p><code>co_return total</code> 等价于 <code>promise_type.return_value(total)</code>，即返回的数据会通过 <code>return_value()</code> 函数传递给 <code>promise_type</code> 对象， 因此 <code>promise_type</code> 必须实现这个函数以接收数据。</p>
 <p>此外，还需要确保返回类型 <code>Task</code> 能访问到这个数据。为了减少数据传递，我们可以在 <code>promise_type</code> 和 <code>Task</code> 之间共享同一份数据。下面是修改后的完整示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;coroutine&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">IntReader</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">await_ready</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;  <span class="comment">// 始终暂停协程</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">await_suspend</span><span class="params">(std::coroutine_handle&lt;&gt; handle)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 在协程暂停时启动一个新线程执行异步操作</span></span><br><span class="line">        std::<span class="built_in">thread</span>([<span class="keyword">this</span>, handle]() &#123;</span><br><span class="line">            std::<span class="built_in">srand</span>(<span class="built_in">static_cast</span>&lt;<span class="type">unsigned</span> <span class="type">int</span>&gt;(std::<span class="built_in">time</span>(<span class="literal">nullptr</span>)));</span><br><span class="line">            value_ = std::<span class="built_in">rand</span>();  <span class="comment">// 生成随机数</span></span><br><span class="line"></span><br><span class="line">            handle.<span class="built_in">resume</span>();  <span class="comment">// 完成后恢复协程执行</span></span><br><span class="line">        &#125;).<span class="built_in">detach</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">await_resume</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> value_;  <span class="comment">// 返回异步操作的结果</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> value_&#123;&#125;;  <span class="comment">// 用于存储随机数</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Task</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">class</span> <span class="title class_">promise_type</span> &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="built_in">promise_type</span>() : <span class="built_in">value_</span>(std::<span class="built_in">make_shared</span>&lt;<span class="type">int</span>&gt;()) &#123;&#125;</span><br><span class="line"></span><br><span class="line">        <span class="function">Task <span class="title">get_return_object</span><span class="params">()</span> </span>&#123; </span><br><span class="line">            <span class="keyword">return</span> Task&#123; value_ &#125;;  <span class="comment">// 返回 Task 对象</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">return_value</span><span class="params">(<span class="type">int</span> value)</span> </span>&#123;</span><br><span class="line">            *value_ = value;  <span class="comment">// 将值存储到共享数据中</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function">std::suspend_never <span class="title">initial_suspend</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> &#123;&#125;; &#125;</span><br><span class="line">        <span class="function">std::suspend_never <span class="title">final_suspend</span><span class="params">()</span> <span class="keyword">noexcept</span> </span>&#123; <span class="keyword">return</span> &#123;&#125;; &#125;</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">unhandled_exception</span><span class="params">()</span> </span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        std::shared_ptr&lt;<span class="type">int</span>&gt; value_;  <span class="comment">// 存储协程返回值的智能指针</span></span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Task</span>(<span class="type">const</span> std::shared_ptr&lt;<span class="type">int</span>&gt;&amp; value) : <span class="built_in">value_</span>(value) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">GetValue</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> *value_;  <span class="comment">// 返回协程计算结果</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::shared_ptr&lt;<span class="type">int</span>&gt; value_;  <span class="comment">// 共享的数据</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">Task <span class="title">GetInt</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    IntReader reader1;</span><br><span class="line">    <span class="type">int</span> total = <span class="keyword">co_await</span> reader1;</span><br><span class="line"></span><br><span class="line">    IntReader reader2;</span><br><span class="line">    total += <span class="keyword">co_await</span> reader2;</span><br><span class="line"></span><br><span class="line">    IntReader reader3;</span><br><span class="line">    total += <span class="keyword">co_await</span> reader3;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">co_return</span> total;  <span class="comment">// 返回总和</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> task = <span class="built_in">GetInt</span>();  <span class="comment">// 启动协程</span></span><br><span class="line"></span><br><span class="line">    std::string line;</span><br><span class="line">    <span class="keyword">while</span> (std::cin &gt;&gt; line) &#123;</span><br><span class="line">        std::cout &lt;&lt; task.<span class="built_in">GetValue</span>() &lt;&lt; std::endl;  <span class="comment">// 输出协程返回的值</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;coroutine&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">IntReader</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">await_ready</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;  <span class="comment">// 始终暂停协程</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">await_suspend</span><span class="params">(std::coroutine_handle&lt;&gt; handle)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 在协程暂停时启动一个新线程执行异步操作</span></span><br><span class="line">        std::<span class="built_in">thread</span>([<span class="keyword">this</span>, handle]() &#123;</span><br><span class="line">            std::<span class="built_in">srand</span>(<span class="built_in">static_cast</span>&lt;<span class="type">unsigned</span> <span class="type">int</span>&gt;(std::<span class="built_in">time</span>(<span class="literal">nullptr</span>)));</span><br><span class="line">            value_ = std::<span class="built_in">rand</span>();  <span class="comment">// 生成随机数</span></span><br><span class="line"></span><br><span class="line">            handle.<span class="built_in">resume</span>();  <span class="comment">// 完成后恢复协程执行</span></span><br><span class="line">        &#125;).<span class="built_in">detach</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">await_resume</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> value_;  <span class="comment">// 返回异步操作的结果</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> value_&#123;&#125;;  <span class="comment">// 用于存储随机数</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Task</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">class</span> <span class="title class_">promise_type</span> &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="built_in">promise_type</span>() : <span class="built_in">value_</span>(std::<span class="built_in">make_shared</span>&lt;<span class="type">int</span>&gt;()) &#123;&#125;</span><br><span class="line"></span><br><span class="line">        <span class="function">Task <span class="title">get_return_object</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> Task&#123; value_ &#125;;  <span class="comment">// 返回 Task 对象</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">return_value</span><span class="params">(<span class="type">int</span> value)</span> </span>&#123;</span><br><span class="line">            *value_ = value;  <span class="comment">// 将值存储到共享数据中</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function">std::suspend_never <span class="title">initial_suspend</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> &#123;&#125;; &#125;</span><br><span class="line">        <span class="function">std::suspend_never <span class="title">final_suspend</span><span class="params">()</span> <span class="keyword">noexcept</span> </span>&#123; <span class="keyword">return</span> &#123;&#125;; &#125;</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">unhandled_exception</span><span class="params">()</span> </span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        std::shared_ptr&lt;<span class="type">int</span>&gt; value_;  <span class="comment">// 存储协程返回值的智能指针</span></span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Task</span>(<span class="type">const</span> std::shared_ptr&lt;<span class="type">int</span>&gt;&amp; value) : <span class="built_in">value_</span>(value) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">GetValue</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> *value_;  <span class="comment">// 返回协程计算结果</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::shared_ptr&lt;<span class="type">int</span>&gt; value_;  <span class="comment">// 共享的数据</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">Task <span class="title">GetInt</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    IntReader reader1;</span><br><span class="line">    <span class="type">int</span> total = <span class="keyword">co_await</span> reader1;</span><br><span class="line"></span><br><span class="line">    IntReader reader2;</span><br><span class="line">    total += <span class="keyword">co_await</span> reader2;</span><br><span class="line"></span><br><span class="line">    IntReader reader3;</span><br><span class="line">    total += <span class="keyword">co_await</span> reader3;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">co_return</span> total;  <span class="comment">// 返回总和</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> task = <span class="built_in">GetInt</span>();  <span class="comment">// 启动协程</span></span><br><span class="line"></span><br><span class="line">    std::string line;</span><br><span class="line">    <span class="keyword">while</span> (std::cin &gt;&gt; line) &#123;</span><br><span class="line">        std::cout &lt;&lt; task.<span class="built_in">GetValue</span>() &lt;&lt; std::endl;  <span class="comment">// 输出协程返回的值</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>我们通过 <code>std::shared_ptr&lt;int&gt;</code> 在 <code>promise_type</code> 和 <code>Task</code> 之间共享数据。当 <code>get_return_object()</code> 创建 <code>Task</code> 时，它会将 <code>promise_type</code> 中的智能指针传递给 <code>Task</code>，这样它们就能访问到同一个数据。然后，协程内部通过 <code>return_value()</code> 函数将结果写入共享数据，而 <code>Task</code> 则通过 <code>GetValue()</code> 读取并返回该数据。</p>
 <p>异步是具有传染性的，由于 <code>GetInt()</code> 协程内部使用了异步操作（<code>co_await</code>），它本身也是一个异步操作。为了等待协程执行完成，我们将 <code>task.GetValue()</code> 放在 <code>while</code> 循环中，在每次用户输入时输出当前结果。这是一个简单的示例程序，缺乏异步同步机制，所以通过通过等待用户输入来间接等待协程的执行。</p>
@@ -292,7 +314,7 @@
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">Next</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    coroutine_handle_.<span class="built_in">resume</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>这意味着 <code>Task</code> 需要持有协程句柄，这个句柄通过 <code>promise_type</code> 中的 <code>get_return_object()</code> 方法传递给 <code>Task</code>：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">Task <span class="title">get_return_object</span><span class="params">()</span> </span>&#123; </span><br><span class="line">    <span class="keyword">return</span> Task&#123; std::coroutine_handle&lt;promise_type&gt;::<span class="built_in">from_promise</span>(*<span class="keyword">this</span>) &#125;;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">Task <span class="title">get_return_object</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> Task&#123; std::coroutine_handle&lt;promise_type&gt;::<span class="built_in">from_promise</span>(*<span class="keyword">this</span>) &#125;;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <p><code>std::coroutine_handle</code> 的 <code>from_promise()</code> 函数可以通过 <code>promise_type</code> 对象获取与之关联的协程句柄，反之，协程句柄上也有一个 <code>promise()</code> 函数可以获取对应的 <code>promise_type</code> 对象，他们是可以互相转换的。所以，在 <code>Task</code> 和 <code>promise_type</code> 之间就不需要使用 <code>std::shared_ptr&lt;int&gt;</code> 来共享数据， <code>Task</code> 通过协程句柄就能访问到 <code>promise_type</code> 对象，像下面这样直接取数据就可以了：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">GetValue</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> coroutine_handle_.<span class="built_in">promise</span>().<span class="built_in">GetValue</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -354,9 +376,166 @@
 <p>调用了 <code>unhandled_exception()</code> 之后，协程就结束了，接下来会继续调用 <code>final_suspend()</code> ，与正常结束协程的流程一样。C++标准规定： <code>final_suspend()</code> 必须定义成 <code>noexcept</code> ，也就是说它不允许抛出任何异常。</p>
 <h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>至此，我们介绍完了C++协程的基础内容，可以感觉到，C++20的协程仍然只提供了一些基础功能，使用起来并不友好。</p>
 <p>要想在实际的开发中使用上C++协程，还有比较长的路。我们可以自己动手对它进行封装，或者使用第三方库的，或者期待未来的C++标准带来更高层封装的协程组件。</p>
-</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://ming-z0.github.io">Ming</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://ming-z0.github.io/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/">https://ming-z0.github.io/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://ming-z0.github.io" target="_blank">MINGの部落格</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/C/">C++</a><a class="post-meta__tags" href="/tags/%E5%8D%8F%E7%A8%8B/">协程</a></div><div class="post-share"><div class="social-share" data-image="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/19.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2025/01/04/%E6%9D%82%E9%A1%B9/sphinx%20%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/20.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">sphinx 使用指南</div></div><div class="info-2"><div class="info-item-1">前言Sphinx介绍Sphinx是一种文档生成工具，主要用于生成和管理过程文档。它支持以Python为基础的丰富插件，可以输出为HTML，PDF，Latex等格式。 reStructuredText 介绍reStructuredText （简称reST）是一种轻量级标记语言，文件名后缀为.rst。是 Sphinx 使用的默认纯文本标记语言 markdown介绍Markdown 也是一种轻量级标记语言，文件名后缀通常为.md。 环境准备Python安装Linux环境 确保已安装Python  1python3...</div></div></div></a><a class="pagination-related" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/8.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">深入浅出访存优化</div></div><div class="info-2"><div class="info-item-1">该篇内容基于小彭老师访存优化课程，添加了自己的理解和备注 第0章：前言将会用到的工具代码： ticktock.h封装TBB计时工具  12345678910111213#pragma once// #include &lt;chrono&gt;// #define TICK(x) auto bench_##x = std::chrono::steady_clock::now();// #define TOCK(x) std::cout &lt;&lt; #x &quot;: &quot; &lt;&lt;//...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2024/10/17/CPP/CMake/%E7%8E%B0%E4%BB%A3CMake/" title="现代CMake"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/15.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-17</div><div class="info-item-2">现代CMake</div></div><div class="info-2"><div class="info-item-1"> 现代CMake指的是 CMake 3.x  古代CMake指的是 CMake 2.x  现代CMake比古代CMake使用更加方便，功能更加强大   命令行小技巧传统构建方式对比：1234567891011# 古代 CMakemkdir -p build	# 创建build目录cd build	# 切换到build目录cmake ..	# 在build目录运行cmake &lt;源码目录&gt;生成Makefilemake -j4	# 执行本地的构建系统 make 真正开始构建（4进程并行）make install	# 让本地构建系统执行安装步骤# 现代 CMakecmake -B...</div></div></div></a><a class="pagination-related" href="/2024/10/21/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%B8%80%E3%80%81%E5%89%8D%E8%A8%80/" title="全面理解STL-前言"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/3.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-21</div><div class="info-item-2">全面理解STL-前言</div></div><div class="info-2"><div class="info-item-1">C++ 标准模板库（Standard Template Library，STL）是一套功能强大的 C++ 模板类和函数的集合，它提供了一系列通用的、可复用的算法和数据结构。 STL 的设计基于泛型编程，这意味着使用模板可以编写出独立于任何特定数据类型的代码。 STL 分为多个组件，包括容器（Containers）、迭代器（Iterators）、算法（Algorithms）、函数对象（Function Objects）和适配器（Adapters）等。 使用 STL 的好处:  代码复用：STL 提供了大量的通用数据结构和算法，可以减少重复编写代码的工作。 性能优化：STL...</div></div></div></a><a class="pagination-related" href="/2024/10/23/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%B8%89%E3%80%81set%E7%B3%BB%E5%88%97%E5%AE%B9%E5%99%A8%E4%B8%8E%E8%BF%AD%E4%BB%A3%E5%99%A8%E5%88%86%E7%B1%BB/" title="全面理解STL-set系列容器与迭代器分类"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/1.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-23</div><div class="info-item-2">全面理解STL-set系列容器与迭代器分类</div></div><div class="info-2"><div class="info-item-1">迭代器的分类   迭代器类型 描述 提供的运算符重载 具有此迭代器的容器 相应的 C++20...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div class="comment-switch"><span class="first-comment">Twikoo</span><span id="switch-btn"></span><span class="second-comment">Livere</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div><div><div id="lv-container" data-id="city" data-uid="MTAyMC82MDIzOS8zNjcwNw"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Ming</div><div class="author-info-description">一个记录、分享自己学习过程的博客</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">28</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">15</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">9</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/ming-z0" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:ming-zhanglu@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到MINGの部落格！</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#C-20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8"><span class="toc-number">1.</span> <span class="toc-text">C++20协程入门</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E5%8D%8F%E7%A8%8B%EF%BC%9F"><span class="toc-number">1.1.</span> <span class="toc-text">什么是协程？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8F%E7%A8%8B%E7%9A%84%E4%BC%98%E7%82%B9"><span class="toc-number">1.2.</span> <span class="toc-text">协程的优点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E5%8D%8F%E7%A8%8B"><span class="toc-number">1.3.</span> <span class="toc-text">实现一个协程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#co-await-%E5%92%8C-Awaitable"><span class="toc-number">1.3.1.</span> <span class="toc-text">co_await 和 Awaitable</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%A2%84%E5%AE%9A%E4%B9%89%E7%9A%84Awaitable%E7%B1%BB%E5%9E%8B"><span class="toc-number">1.3.2.</span> <span class="toc-text">预定义的Awaitable类型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8D%8F%E7%A8%8B%E7%9A%84%E8%BF%94%E5%9B%9E%E7%B1%BB%E5%9E%8B%E4%B8%8E-promise-type"><span class="toc-number">1.3.3.</span> <span class="toc-text">协程的返回类型与 promise_type</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#co-return"><span class="toc-number">1.3.4.</span> <span class="toc-text">co_return</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#co-yield"><span class="toc-number">1.3.5.</span> <span class="toc-text">co_yield</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8F%E7%A8%8B%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="toc-number">1.4.</span> <span class="toc-text">协程的生命周期</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%87%AA%E5%8A%A8%E9%87%8A%E6%94%BE%EF%BC%9A"><span class="toc-number">1.4.1.</span> <span class="toc-text">自动释放：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E9%87%8A%E6%94%BE%E5%86%85%E5%AD%98"><span class="toc-number">1.4.2.</span> <span class="toc-text">手动释放内存</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#initial-suspend-%E7%9A%84%E5%BA%94%E7%94%A8"><span class="toc-number">1.4.3.</span> <span class="toc-text">initial_suspend() 的应用</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86"><span class="toc-number">1.5.</span> <span class="toc-text">异常处理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%8E%E8%AE%B0"><span class="toc-number">1.6.</span> <span class="toc-text">后记</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/08/21/%E9%9D%A2%E8%AF%95/resume/" title="无标题"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/18.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="无标题"/></a><div class="content"><a class="title" href="/2025/08/21/%E9%9D%A2%E8%AF%95/resume/" title="无标题">无标题</a><time datetime="2025-08-21T06:22:29.836Z" title="发表于 2025-08-21 14:22:29">2025-08-21</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/9.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AimRT官方示例解析"/></a><div class="content"><a class="title" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析">AimRT官方示例解析</a><time datetime="2025-05-17T16:00:00.000Z" title="发表于 2025-05-18 00:00:00">2025-05-18</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/01/04/%E6%9D%82%E9%A1%B9/sphinx%20%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/20.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="sphinx 使用指南"/></a><div class="content"><a class="title" href="/2025/01/04/%E6%9D%82%E9%A1%B9/sphinx%20%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南">sphinx 使用指南</a><time datetime="2025-01-03T16:00:00.000Z" title="发表于 2025-01-04 00:00:00">2025-01-04</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/19.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++协程入门"/></a><div class="content"><a class="title" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门">C++协程入门</a><time datetime="2024-11-19T16:00:00.000Z" title="发表于 2024-11-20 00:00:00">2024-11-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/8.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="深入浅出访存优化"/></a><div class="content"><a class="title" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化">深入浅出访存优化</a><time datetime="2024-11-09T16:00:00.000Z" title="发表于 2024-11-10 00:00:00">2024-11-10</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url(./img/文章封面/19.jpg);"><div id="footer-wrap"><div class="copyright">&copy;2023 - 2025 By Ming</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat-btn" type="button" title="聊天" style="display:none"><i class="fas fa-message"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
-  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
-  const option = null
+</article><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/4.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">深入浅出访存优化</div></div></a></div><div class="next-post pull-right"><a href="/2025/01/04/%E9%9A%8F%E8%AE%B0/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/5.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">sphinx 使用指南</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2024/10/29/CPP/CUDA/%E6%80%A5%E9%80%9F%E6%90%AD%E5%BB%BACUDA%E4%BD%93%E9%AA%8C%E7%8E%AF%E5%A2%83/%E6%80%A5%E9%80%9F%E6%90%AD%E5%BB%BACUDA%E4%BD%93%E9%AA%8C%E7%8E%AF%E5%A2%83/" title="WSL2快速搭建CUDA体验环境"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2024-10-29</div><div class="title">WSL2快速搭建CUDA体验环境</div></div></a></div><div><a href="/2024/10/25/CPP/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC1%E7%AB%A0/" title="CUDA开始的GPU编程-第一章"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/4.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2024-10-25</div><div class="title">CUDA开始的GPU编程-第一章</div></div></a></div><div><a href="/2024/11/09/CPP/%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B/TBB%E5%BC%80%E5%90%AF%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%97%85/" title="TBB开启并行编程之旅"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2024-11-09</div><div class="title">TBB开启并行编程之旅</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="anzhiyufont anzhiyu-icon-comments"></i><span> 评论</span></div><div class="comment-randomInfo"><a onclick="anzhiyu.addRandomCommentInfo()" href="javascript:void(0)">匿名评论</a><a href="/privacy" style="margin-left: 4px">隐私政策</a></div><div class="comment-tips" id="comment-tips"><span>✅ 你无需删除空行，直接评论以获取最佳展示效果</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div><div class="comment-barrage"></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description">一个记录、分享自己学习过程的博客</div><div class="author-info__bottom-group"><a class="author-info__bottom-group-left" href="/"><h1 class="author-info__name">Ming</h1><div class="author-info__desc">MINGの部落格</div></a><div class="card-info-social-icons is-center"><a class="social-icon faa-parent animated-hover" href="https://github.com/MING-Z0/" target="_blank" title="Github"><i class="anzhiyufont anzhiyu-icon-github"></i></a><a class="social-icon faa-parent animated-hover" href="https://space.bilibili.com/484647453" target="_blank" title="BiliBili"><i class="anzhiyufont anzhiyu-icon-bilibili"></i></a></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#C-20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8"><span class="toc-number">1.</span> <span class="toc-text">C++20协程入门</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E5%8D%8F%E7%A8%8B%EF%BC%9F"><span class="toc-number">1.1.</span> <span class="toc-text">什么是协程？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8F%E7%A8%8B%E7%9A%84%E4%BC%98%E7%82%B9"><span class="toc-number">1.2.</span> <span class="toc-text">协程的优点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E5%8D%8F%E7%A8%8B"><span class="toc-number">1.3.</span> <span class="toc-text">实现一个协程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#co-await-%E5%92%8C-Awaitable"><span class="toc-number">1.3.1.</span> <span class="toc-text">co_await 和 Awaitable</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%A2%84%E5%AE%9A%E4%B9%89%E7%9A%84Awaitable%E7%B1%BB%E5%9E%8B"><span class="toc-number">1.3.2.</span> <span class="toc-text">预定义的Awaitable类型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8D%8F%E7%A8%8B%E7%9A%84%E8%BF%94%E5%9B%9E%E7%B1%BB%E5%9E%8B%E4%B8%8E-promise-type"><span class="toc-number">1.3.3.</span> <span class="toc-text">协程的返回类型与 promise_type</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#co-return"><span class="toc-number">1.3.4.</span> <span class="toc-text">co_return</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#co-yield"><span class="toc-number">1.3.5.</span> <span class="toc-text">co_yield</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8F%E7%A8%8B%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="toc-number">1.4.</span> <span class="toc-text">协程的生命周期</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%87%AA%E5%8A%A8%E9%87%8A%E6%94%BE%EF%BC%9A"><span class="toc-number">1.4.1.</span> <span class="toc-text">自动释放：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E9%87%8A%E6%94%BE%E5%86%85%E5%AD%98"><span class="toc-number">1.4.2.</span> <span class="toc-text">手动释放内存</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#initial-suspend-%E7%9A%84%E5%BA%94%E7%94%A8"><span class="toc-number">1.4.3.</span> <span class="toc-text">initial_suspend() 的应用</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86"><span class="toc-number">1.5.</span> <span class="toc-text">异常处理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%8E%E8%AE%B0"><span class="toc-number">1.6.</span> <span class="toc-text">后记</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/6.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AimRT官方示例解析"/></a><div class="content"><a class="title" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析">AimRT官方示例解析</a><time datetime="2025-05-17T16:00:00.000Z" title="发表于 2025-05-18 00:00:00">2025-05-18</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/01/04/%E9%9A%8F%E8%AE%B0/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/5.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="sphinx 使用指南"/></a><div class="content"><a class="title" href="/2025/01/04/%E9%9A%8F%E8%AE%B0/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南">sphinx 使用指南</a><time datetime="2025-01-03T16:00:00.000Z" title="发表于 2025-01-04 00:00:00">2025-01-04</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++协程入门"/></a><div class="content"><a class="title" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门">C++协程入门</a><time datetime="2024-11-19T16:00:00.000Z" title="发表于 2024-11-20 00:00:00">2024-11-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/4.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="深入浅出访存优化"/></a><div class="content"><a class="title" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化">深入浅出访存优化</a><time datetime="2024-11-09T16:00:00.000Z" title="发表于 2024-11-10 00:00:00">2024-11-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/09/CPP/%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B/TBB%E5%BC%80%E5%90%AF%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%97%85/" title="TBB开启并行编程之旅"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TBB开启并行编程之旅"/></a><div class="content"><a class="title" href="/2024/11/09/CPP/%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B/TBB%E5%BC%80%E5%90%AF%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%97%85/" title="TBB开启并行编程之旅">TBB开启并行编程之旅</a><time datetime="2024-11-08T16:00:00.000Z" title="发表于 2024-11-09 00:00:00">2024-11-09</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div id="footer_deal"><a class="deal_link" href="/ming-zhanglu@outlook.com" title="email"><i class="anzhiyufont anzhiyu-icon-envelope"></i></a><img class="footer_mini_logo" title="返回顶部" alt="返回顶部" onclick="anzhiyu.scrollToDest(0, 500)" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/配置/头像.jpg" size="50px"/><a class="deal_link" target="_blank" rel="noopener" href="https://github.com/ming-z0" title="Github"><i class="anzhiyufont anzhiyu-icon-github"></i></a><a class="deal_link" target="_blank" rel="noopener" href="https://space.bilibili.com/484647453" title="Bilibili"><i class="anzhiyufont anzhiyu-icon-bilibili"></i></a></div><div id="workboard"><img class="workSituationImg boardsign" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@2.0.4/img/badge/安知鱼-上班摸鱼中.svg" alt="距离月入25k也就还差一个大佬带我~" title="距离月入25k也就还差一个大佬带我~"/><div id="runtimeTextTip"></div></div><p id="ghbdages"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" data-title="博客框架为Hexo_v5.4.0" title="博客框架为Hexo_v5.4.0"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@2.1.5/img/badge/Frame-Hexo.svg" alt="博客框架为Hexo_v5.4.0"/></a><a class="github-badge" target="_blank" href="https://blog.anheyu.com/" style="margin-inline:5px" data-title="本站使用AnZhiYu主题" title="本站使用AnZhiYu主题"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.9/img/Theme-AnZhiYu-2E67D3.svg" alt="本站使用AnZhiYu主题"/></a><a class="github-badge" target="_blank" href="https://github.com/" style="margin-inline:5px" data-title="本站项目由Github托管" title="本站项目由Github托管"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@2.1.5/img/badge/Source-Github.svg" alt="本站项目由Github托管"/></a></p></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2023 - 2025 By <a class="footer-bar-link" href="/" title="Ming" target="_blank">Ming</a></div></div><div id="footer-type-tips"></div><div class="js-pjax"><script>function subtitleType () {
+  getScript('https://sdk.jinrishici.com/v2/browser/jinrishici.js').then(() => {
+    jinrishici.load(result =>{
+      if (true) {
+        const sub = ["生活明朗&#44; 万物可爱&#44; 人间值得&#44; 未来可期."]
+        const content = result.data.content
+        sub.unshift(content)
+        window.typed = new Typed('#footer-type-tips', {
+          strings: sub,
+          startDelay: 300,
+          typeSpeed: 150,
+          loop: true,
+          backSpeed: 50,
+        })
+      } else {
+        document.getElementById('footer-type-tips').innerHTML = result.data.content
+      }
+    })
+  })
+}
+
+if (true) {
+  if (typeof Typed === 'function') {
+    subtitleType()
+  } else {
+    getScript('https://cdn.cbd.int/typed.js@2.1.0/dist/typed.umd.js').then(subtitleType)
+  }
+} else {
+  subtitleType()
+}
+</script></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">27</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">7</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://ming-blog.top/" title="MINGの部落格"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/配置/头像.jpg" alt="MINGの部落格"/><span class="back-menu-item-text">MINGの部落格</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://github.com/MING-Z0/" title="GitHub"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="GitHub"/><span class="back-menu-item-text">GitHub</span></a></div></div></div><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/archives/"><span> 隧道</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/categories/"><span> 分类</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/tags/"><span> 标签</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/link/"><span> 友人帐</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/about/"><span> 关于本人</span></a></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/AimRT/" style="font-size: 0.88rem;">AimRT<sup>1</sup></a><a href="/tags/CMake/" style="font-size: 0.88rem;">CMake<sup>2</sup></a><a href="/tags/CPP/" style="font-size: 0.88rem;">CPP<sup>21</sup></a><a href="/tags/CUDA/" style="font-size: 0.88rem;">CUDA<sup>10</sup></a><a href="/tags/STL/" style="font-size: 0.88rem;">STL<sup>5</sup></a><a href="/tags/%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97/" style="font-size: 0.88rem;">并行计算<sup>12</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/" style="font-size: 0.88rem;">开发环境<sup>1</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E8%AF%AD%E8%A8%80/" style="font-size: 0.88rem;">开发语言<sup>5</sup></a><a href="/tags/%E6%9C%BA%E5%99%A8%E4%BA%BA/" style="font-size: 0.88rem;">机器人<sup>1</sup></a><a href="/tags/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" style="font-size: 0.88rem;">访存优化<sup>1</sup></a><a href="/tags/%E9%9A%8F%E8%AE%B0/" style="font-size: 0.88rem;">随记<sup>5</sup></a><a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 0.88rem;">面试<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="anzhiyufont anzhiyu-icon-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="12875524711" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random" volume="0.5"></meting-js></div><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="anzhiyufont anzhiyu-icon-xmark"></i></button></nav><div class="is-center" id="loading-database"><i class="anzhiyufont anzhiyu-icon-spinner anzhiyu-pulse-icon"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div></div></div><div id="search-mask"></div></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://music.163.com/#/my/m/music/playlist?id=12875524711&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/medium-zoom@1.1.0/dist/medium-zoom.min.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.5/dist/lazyload.iife.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.cbd.int/pangu@4.0.7/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (false){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script async src="/anzhiyu/random.js"></script><script async="async">(function () {
+  var grt = new Date("04/01/2021 00:00:00"); //设置网站上线时间
+  var now = new Date();
+  var dnum;
+  var hnum;
+  var mnum;
+  var snum;
+  var nowHour;
+
+  // 计算并更新天数、小时数、分钟数和秒数
+  function updateTime() {
+    now = new Date(); // 更新 now 的值
+    nowHour = now.getHours(); // 更新 nowHour 的值
+    var days = (now - grt) / 1000 / 60 / 60 / 24;
+    dnum = Math.floor(days);
+    var hours = (now - grt) / 1000 / 60 / 60 - 24 * dnum;
+    hnum = Math.floor(hours);
+    if (String(hnum).length == 1) {
+      hnum = "0" + hnum;
+    }
+    var minutes = (now - grt) / 1000 / 60 - 24 * 60 * dnum - 60 * hnum;
+    mnum = Math.floor(minutes);
+    if (String(mnum).length == 1) {
+      mnum = "0" + mnum;
+    }
+    var seconds = (now - grt) / 1000 - 24 * 60 * 60 * dnum - 60 * 60 * hnum - 60 * mnum;
+    snum = Math.round(seconds);
+    if (String(snum).length == 1) {
+      snum = "0" + snum;
+    }
+  }
+
+  // 更新网页中显示的网站运行时间
+  function updateHtml() {
+    const footer = document.getElementById("footer");
+    if (!footer) return
+    let currentTimeHtml = "";
+    if (nowHour < 18 && nowHour >= 9) {
+      // 如果是上班时间，默认就是"安知鱼-上班摸鱼中.svg"图片，不需要更改
+      currentTimeHtml = `本站居然运行了 ${dnum} 天<span id='runtime'> ${hnum} 小时 ${mnum} 分 ${snum} 秒 </span><i class='anzhiyufont anzhiyu-icon-heartbeat' style='color:red'></i>`;
+    } else {
+      // 如果是下班时间，插入"安知鱼-下班啦.svg"图片
+      let img = document.querySelector("#workboard .workSituationImg");
+      if (img != null) {
+        img.src = "https://npm.elemecdn.com/anzhiyu-blog@2.0.4/img/badge/安知鱼-下班啦.svg";
+        img.title = "下班了就该开开心心的玩耍，嘿嘿~";
+        img.alt = "下班了就该开开心心的玩耍，嘿嘿~";
+      }
+
+      currentTimeHtml = `本站居然运行了 ${dnum} 天<span id='runtime'> ${hnum} 小时 ${mnum} 分 ${snum} 秒 </span><i class='anzhiyufont anzhiyu-icon-heartbeat' style='color:red'></i>`;
+    }
+
+    if (document.getElementById("runtimeTextTip")) {
+      document.getElementById("runtimeTextTip").innerHTML = currentTimeHtml;
+    }
+  }
+
+  setInterval(() => {
+    updateTime();
+    updateHtml();
+  }, 1000);
+})();</script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      tags: 'ams'
+    },
+    chtml: {
+      scale: 1.1
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, '']
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.cbd.int/mathjax@3.2.2/es5/tex-mml-chtml.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typesetPromise()
+}</script><script>(() => {
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
+      region: '',
+      onCommentLoaded: () => {
+        anzhiyu.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') setTimeout(runFn,0)
+    else getScript('https://cdn.cbd.int/twikoo@1.6.39/dist/twikoo.all.min.js').then(runFn)
+  }
 
   const getCount = () => {
     const countELement = document.getElementById('twikoo-count')
@@ -373,187 +552,168 @@
     })
   }
 
-  const init = (el = document, path = location.pathname) => {
-    twikoo.init({
-      el: el.querySelector('#twikoo-wrap'),
-      envId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
-      region: '',
-      onCommentLoaded: () => {
-        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
-      },
-      ...option,
-      path: isShuoshuo ? path : (option && option.path) || path
-    })
-
+  const runFn = () => {
+    init();
     
-
-    isShuoshuo && (window.shuoshuoComment.destroyTwikoo = () => {
-      if (el.children.length) {
-        el.innerHTML = ''
-        el.classList.add('no-comment')
-      }
-    })
-  }
-
-  const loadTwikoo = (el, path) => {
-    if (typeof twikoo === 'object') setTimeout(() => init(el, path), 0)
-    else btf.getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(() => init(el, path))
-  }
-
-  if (isShuoshuo) {
-    'Twikoo' === 'Twikoo'
-      ? window.shuoshuoComment = { loadComment: loadTwikoo }
-      : window.loadOtherComment = loadTwikoo
-    return
   }
 
   if ('Twikoo' === 'Twikoo' || !false) {
-    if (false) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
-    else loadTwikoo()
+    if (false) anzhiyu.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else {
+      loadTwikoo()
+    }
   } else {
     window.loadOtherComment = loadTwikoo
   }
-})()</script><script>(() => {
-  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+})()</script><input type="hidden" name="page-type" id="page-type" value="post"></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
 
-  const loadLivere = (el, path) => {
-    window.livereOptions = {
-      refer: path || location.pathname
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[图片]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[链接]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[代码]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "无法获取评论，请确认相关配置是否正确"
+      })
     }
 
-    if (isShuoshuo) {
-      window.shuoshuoComment.destroyLivere = () => {
-        if (el.children.length) {
-          el.innerHTML = ''
-          el.classList.add('no-comment')
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.cbd.int/twikoo@1.6.39/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'data-lazy-src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'><div class='name'><span>${array[i].nick} </span></div></a>`
         }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <time datetime="${array[i].date}">${anzhiyu.diffDate(array[i].date, true)}</time></div>
+        </div>`
       }
+    } else {
+      result += '没有评论'
     }
 
-    if (typeof LivereTower === 'object') window.LivereTower.init()
-    else {
-      (function(d, s) {
-          var j, e = d.getElementsByTagName(s)[0];
-          if (typeof LivereTower === 'function') { return; }
-          j = d.createElement(s);
-          j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
-          j.async = true;
-          e.parentNode.insertBefore(j, e);
-      })(document, 'script');
-    }
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom && ($dom.innerHTML= result)
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
   }
 
-  if (isShuoshuo) {
-    'Twikoo' === 'Livere'
-      ? window.shuoshuoComment = { loadComment: loadLivere }
-      : window.loadOtherComment = loadLivere
-    return
-  }
-
-  if ('Twikoo' === 'Livere' || !false) {
-    if (false) btf.loadComment(document.getElementById('lv-container'), loadLivere)
-    else loadLivere()
-  } else {
-    window.loadOtherComment = loadLivere
-  }
-})()</script></div><div class="aplayer no-destroy" data-id="12875524711" data-server="netease" data-type="playlist" data-fixed="true" data-mini="true" data-volume="0.4" data-order="random" data-autoplay="true"> </div><script id="canvas_nest" defer="defer" color="97,255,145" opacity="0.7" zIndex="-1" count="88" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-nest.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = false;
-POWERMODE.shake = false;
-POWERMODE.mobile = false;
-document.body.addEventListener('input', POWERMODE);
-</script><script>(() => {
-  window.$crisp = ['safe', true]
-  window.CRISP_WEBSITE_ID = "b178ba69-5256-414b-adab-10306c2edf59"
-
-  btf.getScript('https://client.crisp.chat/l.js').then(() => {
-    const isChatBtn = true
-    const isChatHideShow = true
-
-    if (isChatBtn) {
-      const open = () => {
-        $crisp.push(["do", "chat:show"])
-        $crisp.push(["do", "chat:open"])
-      }
-
-      const close = () => $crisp.push(["do", "chat:hide"])
-
-      close()
-
-      $crisp.push(["on", "chat:closed", close])
-
-      window.chatBtnFn = () => $crisp.is("chat:visible") ? close() : open()
-
-      document.getElementById('chat-btn').style.display = 'block'
-    } else if (isChatHideShow) {
-      window.chatBtn = {
-        hide: () => $crisp.push(["do", "chat:hide"]),
-        show: () => $crisp.push(["do", "chat:show"])
-      }
-    }
-  })
-})()</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script>(() => {
-  const destroyAplayer = () => {
-    if (window.aplayers) {
-      for (let i = 0; i < window.aplayers.length; i++) {
-        if (!window.aplayers[i].options.fixed) {
-          window.aplayers[i].destroy()
-        }
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
       }
     }
   }
 
-  const runMetingJS = () => {
-    typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
-  }
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><script>var visitorMail = "visitor@ming.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><script src="/js/anzhiyu/right_click_menu.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["meta[property=\"og:image\"]","meta[property=\"og:title\"]","meta[property=\"og:url\"]","meta[property=\"og:type\"]","meta[property=\"og:site_name\"]","meta[property=\"og:description\"]","head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"]):not([href="/music/"]):not([href="/no-pjax/"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
 
-  btf.addGlobalFn('pjaxSend', destroyAplayer, 'destroyAplayer')
-  btf.addGlobalFn('pjaxComplete', loadMeting, 'runMetingJS')
-})()</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>(() => {
-  const pjaxSelectors = ["meta[property=\"og:image\"]","meta[property=\"og:title\"]","meta[property=\"og:url\"]","meta[property=\"og:description\"]","link[rel=\"canonical\"]","head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
 
-  window.pjax = new Pjax({
-    elements: 'a:not([target="_blank"])',
-    selectors: pjaxSelectors,
-    cacheBust: false,
-    analytics: false,
-    scrollRestoration: false
-  })
-
-  const triggerPjaxFn = (val) => {
-    if (!val) return
-    Object.values(val).forEach(fn => fn())
-  }
-
-  document.addEventListener('pjax:send', () => {
-    // removeEventListener
-    btf.removeGlobalFnEvent('pjaxSendOnce')
-    btf.removeGlobalFnEvent('themeChange')
-
-    // reset readmode
-    const $bodyClassList = document.body.classList
-    if ($bodyClassList.contains('read-mode')) $bodyClassList.remove('read-mode')
-
-    triggerPjaxFn(window.globalFn.pjaxSend)
-  })
-
-  document.addEventListener('pjax:complete', () => {
-    btf.removeGlobalFnEvent('pjaxCompleteOnce')
-    document.querySelectorAll('script[data-pjax]').forEach(item => {
-      const newScript = document.createElement('script')
-      const content = item.text || item.textContent || item.innerHTML || ""
-      Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
-      newScript.appendChild(document.createTextNode(content))
-      item.parentNode.replaceChild(newScript, item)
-    })
-
-    triggerPjaxFn(window.globalFn.pjaxComplete)
-  })
-
-  document.addEventListener('pjax:error', e => {
-    if (e.request.status === 404) {
-      const usePjax = true
-      false 
-        ? (usePjax ? pjax.loadUrl('/404.html') : window.location.href = '/404.html')
-        : window.location.href = e.request.responseURL
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
     }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
   })
-})()</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>

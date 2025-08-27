@@ -1,191 +1,213 @@
-<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>深入浅出访存优化 | MINGの部落格</title><meta name="author" content="Ming"><meta name="copyright" content="Ming"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta name="description" content="该篇内容基于小彭老师访存优化课程，添加了自己的理解和备注 第0章：前言将会用到的工具代码： ticktock.h封装TBB计时工具  12345678910111213#pragma once&#x2F;&#x2F; #include &lt;chrono&gt;&#x2F;&#x2F; #define TICK(x) auto bench_##x &#x3D; std::chrono::steady_clock::now();&#x2F;&#x2F; #defin">
-<meta property="og:type" content="article">
-<meta property="og:title" content="深入浅出访存优化">
-<meta property="og:url" content="https://ming-z0.github.io/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/index.html">
-<meta property="og:site_name" content="MINGの部落格">
-<meta property="og:description" content="该篇内容基于小彭老师访存优化课程，添加了自己的理解和备注 第0章：前言将会用到的工具代码： ticktock.h封装TBB计时工具  12345678910111213#pragma once&#x2F;&#x2F; #include &lt;chrono&gt;&#x2F;&#x2F; #define TICK(x) auto bench_##x &#x3D; std::chrono::steady_clock::now();&#x2F;&#x2F; #defin">
-<meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/8.jpg">
-<meta property="article:published_time" content="2024-11-09T16:00:00.000Z">
-<meta property="article:modified_time" content="2025-01-13T13:58:34.888Z">
-<meta property="article:author" content="Ming">
-<meta property="article:tag" content="C++">
-<meta property="article:tag" content="访存优化">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/8.jpg"><script type="application/ld+json">{
-  "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  "headline": "深入浅出访存优化",
-  "url": "https://ming-z0.github.io/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/",
-  "image": "https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/8.jpg",
-  "datePublished": "2024-11-09T16:00:00.000Z",
-  "dateModified": "2025-01-13T13:58:34.888Z",
-  "author": [
-    {
-      "@type": "Person",
-      "name": "Ming",
-      "url": "https://ming-z0.github.io"
-    }
-  ]
-}</script><link rel="shortcut icon" href="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg"><link rel="canonical" href="https://ming-z0.github.io/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
-    (() => {
-      
-    const saveToLocal = {
-      set: (key, value, ttl) => {
-        if (!ttl) return
-        const expiry = Date.now() + ttl * 86400000
-        localStorage.setItem(key, JSON.stringify({ value, expiry }))
-      },
-      get: key => {
-        const itemStr = localStorage.getItem(key)
-        if (!itemStr) return undefined
-        const { value, expiry } = JSON.parse(itemStr)
-        if (Date.now() > expiry) {
-          localStorage.removeItem(key)
-          return undefined
-        }
-        return value
-      }
-    }
-
-    window.btf = {
-      saveToLocal,
-      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
-        const script = document.createElement('script')
-        script.src = url
-        script.async = true
-        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
-        script.onload = script.onreadystatechange = () => {
-          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
-        }
-        script.onerror = reject
-        document.head.appendChild(script)
-      }),
-      getCSS: (url, id) => new Promise((resolve, reject) => {
-        const link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = url
-        if (id) link.id = id
-        link.onload = link.onreadystatechange = () => {
-          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
-        }
-        link.onerror = reject
-        document.head.appendChild(link)
-      }),
-      addGlobalFn: (key, fn, name = false, parent = window) => {
-        if (!true && key.startsWith('pjax')) return
-        const globalFn = parent.globalFn || {}
-        globalFn[key] = globalFn[key] || {}
-        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
-        parent.globalFn = globalFn
-      }
-    }
-  
-      
-      const activateDarkMode = () => {
-        document.documentElement.setAttribute('data-theme', 'dark')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
-        }
-      }
-      const activateLightMode = () => {
-        document.documentElement.setAttribute('data-theme', 'light')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
-        }
-      }
-
-      btf.activateDarkMode = activateDarkMode
-      btf.activateLightMode = activateLightMode
-
-      const theme = saveToLocal.get('theme')
-    
-          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
-        
-      
-      const asideStatus = saveToLocal.get('aside-status')
-      if (asideStatus !== undefined) {
-        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
-      }
-    
-      
-    const detectApple = () => {
-      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
-        document.documentElement.classList.add('apple')
-      }
-    }
-    detectApple()
-  
-    })()
-  </script><script>(function(c,l,a,r,i,t,y){
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>深入浅出访存优化 | MINGの部落格</title><meta name="keywords" content="CPP,访存优化"><meta name="author" content="Ming"><meta name="copyright" content="Ming"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="深入浅出访存优化"><meta name="application-name" content="深入浅出访存优化"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="深入浅出访存优化"><meta property="og:url" content="https://ming-z0.github.io/2024/11/10/CPP/访存优化/深入浅出访存优化/index.html"><meta property="og:site_name" content="MINGの部落格"><meta property="og:description" content="该篇内容基于小彭老师访存优化课程，添加了自己的理解和备注 第0章：前言将会用到的工具代码： ticktock.h封装TBB计时工具  12345678910111213#pragma once&amp;#x2F;&amp;#x2F; #include &amp;lt;chrono&amp;gt;&amp;#x2F;&amp;#x2F; #define TICK(x) auto benc"><meta property="og:locale" content="zh-CN"><meta property="og:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/4.jpg"><meta property="article:author" content="Ming"><meta property="article:tag" content=" "><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/4.jpg"><meta name="description" content="该篇内容基于小彭老师访存优化课程，添加了自己的理解和备注 第0章：前言将会用到的工具代码： ticktock.h封装TBB计时工具  12345678910111213#pragma once&amp;#x2F;&amp;#x2F; #include &amp;lt;chrono&amp;gt;&amp;#x2F;&amp;#x2F; #define TICK(x) auto benc"><link rel="shortcut icon" href="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg"><link rel="canonical" href="https://ming-z0.github.io/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/"><link rel="preconnect" href="//cdn.cbd.int"/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.28/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/swiper/swiper.min.css" media="print" onload="this.media='all'"><script>(function(c,l,a,r,i,t,y){
     c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
     t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
     y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 })(window, document, "clarity", "script", "i5biwbw9sk");</script><script>const GLOBAL_CONFIG = {
+  linkPageTop: {"enable":true,"title":"无限进步","addFriendPlaceholder":"昵称（请勿包含博客等字样）：\n网站地址（要求博客地址，请勿提交个人主页）：\n头像图片url（请提供尽可能清晰的图片，我会上传到我自己的图床）：\n描述：\n站点截图（可选）：\n"},
+  peoplecanvas: undefined,
+  postHeadAiDescription: undefined,
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: {"enable":true,"default":"晚上好👋","list":[{"greeting":"晚安😴","startTime":0,"endTime":5},{"greeting":"早上好鸭👋, 祝你一天好心情！","startTime":6,"endTime":9},{"greeting":"上午好👋, 状态很好，鼓励一下～","startTime":10,"endTime":10},{"greeting":"11点多啦, 在坚持一下就吃饭啦～","startTime":11,"endTime":11},{"greeting":"午安👋, 休息休息吧！","startTime":12,"endTime":14},{"greeting":"🌈充实的一天辛苦啦！","startTime":14,"endTime":18},{"greeting":"19点喽, 奖励一顿丰盛的大餐吧🍔。","startTime":19,"endTime":19},{"greeting":"晚上好👋, 在属于自己的时间好好放松😌~","startTime":20,"endTime":24}]},
+  twikooEnvId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
+  commentBarrageConfig:undefined,
+  music_page_default: "nav_music",
   root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: {"mode":"cdn","api":"https://img2color-go.vercel.app/api?img=","cover_change":true},
+  authorStatus: undefined,
   algolia: undefined,
-  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":-1,"unescape":false,"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
-  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简"},
-  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":200,"highlightFullpage":true,"highlightMacStyle":true},
+  localSearch: {"path":"/search.xml","preload":false,"languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"距离上次更新已经过去了","messageNext":"天，文章的内容可能已经过时。"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
   copy: {
     success: '复制成功',
-    error: '复制失败',
+    error: '复制错误',
     noSupport: '浏览器不支持'
   },
   relativeDate: {
     homepage: false,
+    simplehomepage: true,
     post: false
   },
-  runtime: '',
-  dateSuffix: {
+  runtime: '天',
+  date_suffix: {
     just: '刚刚',
     min: '分钟前',
     hour: '小时前',
     day: '天前',
     month: '个月前'
   },
-  copyright: undefined,
-  lightbox: 'fancybox',
-  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
-  infinitegrid: {
-    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
-    buttonText: '加载更多'
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: Ming","link":"链接: ","source":"来源: MINGの部落格","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'mediumZoom',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
   },
   isPhotoFigcaption: true,
-  islazyloadPlugin: false,
+  islazyload: true,
   isAnchor: false,
-  percent: {
-    toc: true,
-    rightside: true,
-  },
-  autoDarkmode: false
+  shortcutKey: undefined,
+  autoDarkmode: true
 }</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: 'MINGの部落格',
   title: '深入浅出访存优化',
-  isHighlightShrink: false,
+  postAI: '',
+  pageFillDescription: '第0章：前言, 将会用到的工具代码：, 案例：, 第1章：内存带宽, cpu-bound 与 memory-bound, 浮点加法的计算量, 常见操作所花费的时间, 多少计算量才算多？, 加速曲线, 内存信息查看工具：dmidecode, 验证 parallel_add 是否充分利用了带宽, 第二章：缓存与局域性, 不同数据量对带宽的影响, CPU内部的高速缓存, CPU 缓存的工作原理, 缓存的分级结构, 查看高速缓存大小：lscpu, 通过图形界面查看拓扑结构：lstopo, 如何分析带宽测试结果, 缓存的工作机制：读取操作, 缓存的工作机制：写操作, 连续访问与跨步访问, 缓存行决定数据的粒度, 结构体布局分析, AOS 与 SOA 的内存布局差异, AOS 和 SOA 的性能对比, AOSOA：结合 AOS 与 SOA 优势, 注意内部SOA的尺寸不宜太小, 如果每个属性都要访问到那还是AOS比较好（AOSOA也不赖）, 结论：AOS、SOA、AOSOA 哪家强, 第三章：预取与直写, 顺序访问与随机访问, 解决：按64字节分块地随机访问, 缓存行预取技术：吃着一碗饭的同时先喊妈妈烧下一碗饭, 解决：按更大的分块（4096字节）随机访问, 页对齐的重要性, 手动预取：_mm_prefetch, 重新理解 mem-bound：延迟隐藏, 为什么写入比读取慢？该篇内容基于小彭老师访存优化课程添加了自己的理解和备注第章前言将会用到的工具代码封装计时工具性能测试工具模板关于工具的使用请自行学习把要测试的部分放到指定的循环就可以了需要测试的内容放在这里模板类使得的不会零初始化其中的值提供一个简单的模板结构体用于封装一个类型的对象并避免像等操作时的零初始化类的目的是避免等容器在调用时默认对扩展的元素进行零初始化它通过封装类型的对象提供了控制初始化行为的能力具体来说可以在没有初始化的情况下分配空间或者只在需要时才初始化对象该类具有多个构造函数和赋值操作符支持直接构造拷贝移动赋值等它还提供了方法使得可以在成员变量上原位构造一个新对象避免额外的内存分配该类通常用于需要避免不必要初始化的场景例如与配合使用时减少对不必要元素的初始化开销示例用法创建一个来存储一个整数使用构造函数直接传入值使用方法在中构造新的对象用类型的元素进行容器操作调用时不会零初始化新元素存储的对象类型存储类型的对象默认构造函数默认不初始化允许在容器中分配空间但不进行对象的初始化移动构造函数被移动的对象拷贝构造函数被拷贝的对象移动赋值操作符被移动的对象返回当前对象的引用拷贝赋值操作符被拷贝的对象返回当前对象的引用使用右值构造函数来初始化被传递的右值对象使用左值构造函数来初始化被传递的常量左值对象移动赋值操作符使用右值被赋值的右值对象返回当前对象的引用拷贝赋值操作符使用左值被赋值的常量左值对象返回当前对象的引用将对象转换为类型的引用用于读取的常量引用将对象转换为类型的引用用于修改的非常量引用返回的常量引用的常量引用返回的非常量引用的非常量引用在的位置上原址构造一个新对象该方法使用原址构造在已有内存中构造对象避免内存重新分配适用于需要通过构造函数初始化类型的场景构造对象所需的参数类型构造对象所需的参数当前对象的引用销毁对象明确调用对象的析构函数用于手动销毁释放资源案例运行下面的代码针对你的运行环境不同可能需要测试其他值才能观察到现象已知测试环境三缓大小当时即数组大小为当时即数组大小为我们会发现在当前运行环境下当数组大小小于缓存时写入与写入的速度有着一倍差距但是数组大小大于或者接近缓存时两者写入时间又区别不大本篇我们就来探讨这个现象第章内存带宽与通常来说并行只能加速计算的部分不能加速内存读写的部分因此对这种没有任何计算量纯粹只有访存的循环体并行没有加速效果称为内存瓶颈而这种内部需要泰勒展开来计算每次迭代计算量很大的循环体并行才有较好的加速效果称为计算瓶颈并行能减轻计算瓶颈但不减轻内存瓶颈故后者是优化的重点浮点加法的计算量冷知识并行地给浮点数组每个元素做一次加法反而更慢修改上面做一次加法可以看到并行后速度反而变慢了可以看到并行后速度反而变慢了因为一次浮点加法的计算量和访存的超高延迟相比实在太少了计算太简单数据量又大并行只带来了多线程调度的额外开销经验公式次浮点读写次浮点加法如果矢量化成功次浮点读写次浮点加法如果有核且矢量化成功次浮点读写次浮点加法常见操作所花费的时间操作周期大约表中加法和乘法均指整数运算浮点数的加法和乘法速度基本相同缓存读取和主内存读取的时间指读取一个缓存行字节所需的周期数根据计算即从主内存读取一次大约耗费个周期与我们上边提到的经验公式一致和分别表示分支预测成功和失败的情况多少计算量才算多复杂操作我们看上边的够复杂了吧也只是勉勉强强追上一点内存的延迟了但在个物理核心上并行加速后还是变成了加速比倍甚至在误差范围应该达到倍物理核心数量才算理想加速比加速曲线针对下面三个函数分别测试提示现代性能都较高你的测试结果可能和我不一样将系统设置为能效模式限制频率更容易复现结果结果结果结果主框架经过测试可以看到用了核就饱和用了核才饱和用了核才饱和结论要想利用全部核心避免需要里有足够的计算量当核心数量越多计算能力越强相对之下来不及从内存读写数据从而越容易内存信息查看工具系统查看内存信息查看内存信息我此时在中进行测试无法使用因此我只能在中使用进行测试中的输出结果会与下面的不同请自行测试可以看到我的电脑上插了两根内存频率为数据宽度是位字节理论极限带宽频率位宽数量其实是通道数频率相同的情况下可以考虑插两块的内存比插一块的内存更快系统会自动在两者之间均匀分配内存保证读写均匀分配到两个内存上实现内存的并行读写这和磁盘有一定相似之处验证是否充分利用了带宽数据量在这个例子中我们使用了的数据量即每次操作不仅需要读取数组还要将计算结果写回实际上传输了的数据即总耗时为秒因此带宽为带宽然而这个带宽显著低于理论最大带宽原因可能涉及多种因素正常也不会出现这么大的差距我在环境下运行可能会存在性能上的额外开销第二章缓存与局域性不同数据量对带宽的影响进一步分析带宽的表现我们尝试不同大小的数据量来测试带宽变化结果分析可以看到当数据量较小时实际带宽反而超出了理论带宽这是因为较小的数据集能够完全缓存到的高速缓存中避免了从内存访问的瓶颈当数据量增加时带宽逐渐趋近于理论带宽特别是数据量大到无法完全装入和缓存时性能受限于内存带宽内部的高速缓存厂商早已认识到内存延迟较高的问题因此在内部引入了多个级别的缓存以减少访问内存时的延迟缓存通常分为三级缓存速度最快容量较小通常为每个核心独立缓存较缓存大约为每个核心独立缓存最大通常为到所有核心共享缓存的工作原理当请求数据时它首先检查缓存如果数据不在缓存中它会检查缓存然后是缓存最后从主内存加载如果数据已经缓存则直接从缓存中读取显著减少访问延迟缓存的分级结构注意从下图我们可以看到和缓存是每个核心都有一个才是多个核心共用查看高速缓存大小可以看到我们电脑的缓存结构分为三级一级缓存分为数据缓存和指令缓存其中数据缓存有个物理核心每个都有一个总共而指令缓存的大小刚好和数据缓存一样也是二级缓存有个物理核心每个都有一个总共三级缓存由各个物理核心共享总共通过图形界面查看拓扑结构如何分析带宽测试结果可以看到刚刚两个出现转折的点也是在二级缓存和三级缓存的大小附近根据上面的图表可以观察到在特定数据量下如到区间性能出现了转折点这正是由于缓存大小的影响当数据小到可以完全装入缓存时带宽接近缓存的带宽限制当数据量较大时无法完全存入缓存带宽受限于缓存或主内存带宽结论要避免数据量尽量足够小如果能装的进缓存就高效了缓存的工作机制读取操作缓存中的数据结构如下当请求读取一个地址时缓存会检查是否存在与该地址匹配的条目如果找到匹配项则直接从缓存返回数据如果没有找到则向主内存发起读取请求获取该地址的数据并创建一个新的缓存条目在架构中每个缓存条目存储字节数据这也称为一个缓存行例如当访问地址即字节时实际上会将从地址到范围内的字节数据读取到缓存中这就是为什么我们喜欢把数据结构的起始地址和大小对齐到字节这样可以避免浪费缓存行的存储空间缓存的工作机制写操作当向某个地址写入数据时缓存会查找是否已有匹配的条目如果找到则直接修改缓存中的数据如果没有找到则会创建一个新的缓存条目来存储写入的数据并将其标记为脏数据这意味着数据已经修改但尚未写回主内存当读和写创建的新条目过多缓存快要塞不下时他会把最不常用的那个条目移除这个现象称为失效如果那个条目是被标记为脏的则说明是当时打算写入的数据那就需要向主内存发送写入请求等他写入成功才能安全移除这个条目在多级缓存的情况下如果一级缓存的条目被失效它可能会被推送到二级缓存中连续访问与跨步访问如果访问数组时按一定的间距跨步访问则效率如何性能测试库从这以上的跨度在字节以内即一个缓存行字节的大小性能几乎没有变化跨度达到字节两个缓存行的大小从这开始考虑循环体中计算量的影响在跨步从到时访问效率差别不大但从开始跨步增大才可以效率变快而且变化呈现出以的倍数递增的趋势为什么会出现这种情况在跨步从到时性能差异较小这是因为访问的跨度都小于字节即一个缓存行的大小每次访问会加载整个缓存行因此即使跨步增大仍然需要读取相同的数据区域因为和内存之间隔着缓存而缓存和内存之间传输数据的最小单位是缓存行字节个类型数据正好等于字节所以小于字节的跨步访问实际上这个数组的所有区域都被加载了一遍因此并没有起到减少内存访问次数的效果只有超过字节的跨步中间的那个缓存行才不会被读取实际上才减少了内存访问次数因此变快了至于从步幅字节之后的效果就需要考虑多级缓存的原因缓存行决定数据的粒度结论访问内存的用时和访问的字节数量无关和访问的每个字节所在的缓存行数量有关可见能否很好的利用缓存和程序访问内存的空间局域性有关所以我们设计数据结构时应该把数据存储的尽可能紧凑不要松散排列最好每个缓存行里要么有数据要么没数据避免读取缓存行时浪费一部分空间结构体布局分析结构体的基础布局定义一个结构体模式在模式下每个对象的属性存储在一起或者使用模式在模式下各属性分开存储在独立的数组中与的内存布局差异单个对象的属性紧挨着存属性分离存储在多个数组必须对齐到的幂才高效就不需要符合直觉不一定要存储在数组这种线性结构而可能无法保证多个数组大小一致不符合直觉但通常是更高效的和的性能对比在以下代码中进行与访问的性能基准测试因为缓存行大小是字节它是从内存读写的最小单位而这里的它的有三个大小仅为字节所以当修改的属性时必须读取整个仅仅修改其中的属性然后写回这就浪费了的写的写的读实际用上的只有的读的读的写浪费了带宽而把三个属性分开存每个属性作为独立的数组稠密存储这样当用不到的时候数组就完全不会被读取不会占用内存带宽从而带宽利用率是因此比快了倍结合与优势可以采用外层结构内部的方式组织数据即这种布局在高层次上是但每个元素内部分为缺点是必须保证数量是的整数倍而且因为要两次指标索引随机访问复杂度较高这里的并非随意选取而是要让每个属性数组的大小为一个页才能最高效原因稍后会说明注意内部的尺寸不宜太小如果内部太小内部循环只有次连续的读取次结束后就会跳跃一段然后继续连续的读取这会导致预取机制失效无法预测下一次要读哪里等发现跳跃时已经来不及了从而计算的延迟无法隐藏如果每个属性都要访问到那还是比较好也不赖这是因为使用会让不得不同时维护很多条预取赛道当赛道多了以后每一条赛道的长度就变短了从而能够周转的余地时间比较少不利于延迟隐藏而如果把这三条赛道合并成一条这样同样的经费缓存容量能铺出的赛道预取就更长从而有更长的周转时间来隐藏他内部计算的延迟所以本案例中比好结论哪家强不适合仅适合小规模部分部分适合日常使用适合适合专家不适合适合初学者若多个属性如总是一起使用可能都是同时读取同时修改的可以减少预取压力当属性中有些并不总是一起访问或写入时例如和通常的操作中是读写而仅为只读此时更适合因为能减少内存带宽的占用将的分量使用存储这个结论是单从内存访问效率来看的但需要矢量化例如的情况或可能更合适不过对于非连续存储结构如带有索引开销的稀疏哈希网格可能并不适用在高层保留的统一索引同时在底层享受带来的矢量化和缓存行预取优势只是随机访问的复杂度更高第三章预取与直写顺序访问与随机访问随机访问的效率比顺序访问低的多顺序读取随机读取其中一个原因当然是随机访问只会访问到其中一个而这导致他附近的字节都被读取到缓存了但实际只用到了其中字节之后又没用到剩下的字节导致浪费了的带宽虽说连续顺序访问是最理想的然而在使用哈希表等数据结构中不可避免的会通过哈希函数得到随机的地址来访问且类型可能小于字节浪费部分带宽怎么办解决按字节分块地随机访问解决方法就是把数据按字节大小分块随机访问时只随机块的位置而块的内部仍然按顺序访问顺序访问默认随机访问按字节分块随机访问按个元素分块内部仍然顺序访问可以看到字节分块的效果拔群但还是比顺序访问慢一些为什么明明没有浪费带宽了缓存行预取技术吃着一碗饭的同时先喊妈妈烧下一碗饭其实当程序顺序访问时会智能地预测到你接下来可能会读取于是会提前给缓存发送一个读取指令让他读取缓存在后台默默读取数据的同时自己在继续处理的数据这样等处理完以后缓存也刚好读取完了从而不用等待就可以直接开始处理避免等待数据的时候空转浪费时间这种策略称之为预取由硬件自动识别你程序的访存规律决定要预取的地址一般来说只有线性的地址访问规律包括顺序逆序连续跨步能被识别出来而如果你的访存是随机的那就没办法预测遇到这种突如其来的访存时不得不空转等待数据的抵达才能继续工作浪费了时间解决按更大的分块字节随机访问还可以把分块的大小调的更大一些比如那么大即个缓存行而不是一个基准测试随机访问以分块访问数据每块包含个随机选择块索引访问块中的每个元素随机访问这样一次随机访问之后会伴随着次顺序访问能被检测到从而启动缓存行预取避免了等待数据抵达前空转浪费时间页对齐的重要性为什么要能不能更大一些来现在操作系统管理内存是用分页程序的内存是一页一页贴在地址空间中的有些地方可能不可访问或者还没有分配则把这个页设为不可用状态访问他就会出错进入内核模式因此硬件出于安全预取不能跨越页边界否则可能会触发不必要的所以我们选用页的大小因为本来就不能跨页顺序预取所以被我们切断掉也无所谓另外我们可以用申请起始地址对齐到页边界的一段内存真正做到每个块内部不出现跨页现象基准测试对齐的随机访问以分块访问数据使用分配对齐到字节的内存初始化分配的内存每块包含个随机选择块索引访问块中的每个元素随机访问手动预取对于不得不随机访问很小一块的情况还可以通过指令手动预取一个缓存行这里第一个参数是要预取的地址最好对齐到缓存行第二个参数代表预取数据到一级缓存代表只取到二级缓存代表三级缓存则是预取到非临时缓冲结构中可以最小化对缓存的污染但是必须很快被用上重新理解延迟隐藏之前提到次浮点读写必须伴随着次浮点加法的运算量否则和只有次加法的耗时没有任何区别即内存带宽成唯一瓶颈的可是按我们理解次读写次加法应该会比次读写次加法快一点点吧因为次加法尽管比次读写快很多但是毕竟还是有时间的啊为什么会几乎没有任何区别这都是得益于的预取机制他能够在等待的内存数据抵达时默默地做着的计算从而只要计算的延迟小于内存的延迟延迟就被隐藏起来了而不必等内存抵达了再算这就是为什么有些运算量不足次的程序还是会无法达到手动预取以后才能达到就是因为硬件预取预测失败导致不得不等内存抵达了才能算导致延迟隐藏失败隐藏成功为什么写入比读取慢',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: true,
   isToc: true,
-  pageType: 'post'
-}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
-  const $loadingBox = document.getElementById('loading-box')
-  const $body = document.body
-  const preloader = {
-    endLoading: () => {
-      $body.style.overflow = ''
-      $loadingBox.classList.add('loaded')
-    },
-    initLoading: () => {
-      $body.style.overflow = 'hidden'
-      $loadingBox.classList.remove('loaded')
-    }
+  postUpdate: '2025-08-27 21:28:02',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
   }
 
-  preloader.initLoading()
-  window.addEventListener('load', preloader.endLoading)
-
-  if (true) {
-    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
-    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
   }
-})()</script><div id="web_bg" style="background-image: url(/img/配置/背景.jpg);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">28</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">15</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">9</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 分析</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E6%A0%87%E7%AD%BE/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/%E5%88%86%E7%B1%BB/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fa fa-archive"></i><span> 档案室</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fa fa-user"></i><span> 我的</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E5%8F%8B%E9%93%BE/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 收藏</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1VB4y137ys/"><i class="fa-fw fas fa-heart"></i><span> ROS2理论与实践</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1if4y147hS/"><i class="fa-fw fas fa-heart"></i><span> 动手学深度学习</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://geek-logic.com/"><i class="fa-fw fas fa-heart"></i><span> Geek Logic</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://github.com/parallel101/cppguidebook"><i class="fa-fw fas fa-heart"></i><span> 小彭老师C++大典</span></a></li><li><a class="site-page child" href="/unpublished/ROS2%E7%90%86%E8%AE%BA%E4%B8%8E%E5%AE%9E%E8%B7%B5%E2%80%94%E2%80%94%E6%A0%B8%E5%BF%83%E7%AF%87/"><i class="fa-fw fas fa-heart"></i><span> ROS2</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/%E5%85%B3%E4%BA%8E/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(./img/文章封面/8.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">MINGの部落格</span></a><a class="nav-page-title" href="/"><span class="site-name">深入浅出访存优化</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 分析</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E6%A0%87%E7%AD%BE/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/%E5%88%86%E7%B1%BB/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fa fa-archive"></i><span> 档案室</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fa fa-user"></i><span> 我的</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E5%8F%8B%E9%93%BE/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 收藏</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1VB4y137ys/"><i class="fa-fw fas fa-heart"></i><span> ROS2理论与实践</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1if4y147hS/"><i class="fa-fw fas fa-heart"></i><span> 动手学深度学习</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://geek-logic.com/"><i class="fa-fw fas fa-heart"></i><span> Geek Logic</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://github.com/parallel101/cppguidebook"><i class="fa-fw fas fa-heart"></i><span> 小彭老师C++大典</span></a></li><li><a class="site-page child" href="/unpublished/ROS2%E7%90%86%E8%AE%BA%E4%B8%8E%E5%AE%9E%E8%B7%B5%E2%80%94%E2%80%94%E6%A0%B8%E5%BF%83%E7%AF%87/"><i class="fa-fw fas fa-heart"></i><span> ROS2</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/%E5%85%B3%E4%BA%8E/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">深入浅出访存优化</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-11-09T16:00:00.000Z" title="发表于 2024-11-10 00:00:00">2024-11-10</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-01-13T13:58:34.888Z" title="更新于 2025-01-13 21:58:34">2025-01-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/">访存优化</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">10.4k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>45分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><em>该篇内容基于小彭老师访存优化课程，添加了自己的理解和备注</em></p>
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 7.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><div class="back-home-button"><i class="anzhiyufont anzhiyu-icon-grip-vertical"></i><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://ming-blog.top/" title="MINGの部落格"><img class="back-menu-item-icon" src="/img/配置/头像.jpg" alt="MINGの部落格"/><span class="back-menu-item-text">MINGの部落格</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://github.com/MING-Z0/" title="GitHub"><img class="back-menu-item-icon" src="https://image.anheyu.com/favicon.ico" alt="GitHub"/><span class="back-menu-item-text">GitHub</span></a></div></div></div></div><a id="site-name" href="/" accesskey="h"><div class="title">MINGの部落格</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/archives/"><span> 隧道</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/categories/"><span> 分类</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/tags/"><span> 标签</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/link/"><span> 友人帐</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/about/"><span> 关于本人</span></a></div></div></div><div id="nav-right"><div class="nav-button only-home" id="travellings_button" title="随机前往一个开往项目网站"><a class="site-page" onclick="anzhiyu.totraveling()" title="随机前往一个开往项目网站" href="javascript:void(0);" rel="external nofollow" data-pjax-state="external"><i class="anzhiyufont anzhiyu-icon-train"></i></a></div><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><div class="nav-button" id="search-button"><a class="site-page social-icon search" href="javascript:void(0);" title="搜索🔍" accesskey="s"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span> 搜索</span></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="/./img/%E6%89%93%E8%B5%8F/wechat.jpg" target="_blank"><img class="post-qr-code-img" alt="微信" src="/./img/%E6%89%93%E8%B5%8F/wechat.jpg"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/AimRT/" style="font-size: 1.05rem;">AimRT<sup>1</sup></a><a href="/tags/CMake/" style="font-size: 1.05rem;">CMake<sup>2</sup></a><a href="/tags/CPP/" style="font-size: 1.05rem;">CPP<sup>21</sup></a><a href="/tags/CUDA/" style="font-size: 1.05rem;">CUDA<sup>10</sup></a><a href="/tags/STL/" style="font-size: 1.05rem;">STL<sup>5</sup></a><a href="/tags/%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97/" style="font-size: 1.05rem;">并行计算<sup>12</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/" style="font-size: 1.05rem;">开发环境<sup>1</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E8%AF%AD%E8%A8%80/" style="font-size: 1.05rem;">开发语言<sup>5</sup></a><a href="/tags/%E6%9C%BA%E5%99%A8%E4%BA%BA/" style="font-size: 1.05rem;">机器人<sup>1</sup></a><a href="/tags/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" style="font-size: 1.05rem;">访存优化<sup>1</sup></a><a href="/tags/%E9%9A%8F%E8%AE%B0/" style="font-size: 1.05rem;">随记<sup>5</sup></a><a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 1.05rem;">面试<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2025/05/"><span class="card-archive-list-date">五月 2025</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2025/01/"><span class="card-archive-list-date">一月 2025</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2024/11/"><span class="card-archive-list-date">十一月 2024</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">6</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2024/10/"><span class="card-archive-list-date">十月 2024</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">15</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/12/"><span class="card-archive-list-date">十二月 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">4</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="post-meta-categories"><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-inbox post-meta-icon"></i><a class="post-meta-categories" href="/categories/CPP/" itemprop="url">CPP</a></span><span class="article-meta tags"><a class="article-meta__tags" href="/tags/CPP/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>CPP</span></a><a class="article-meta__tags" href="/tags/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>访存优化</span></a></span></div></div><h1 class="post-title" itemprop="name headline">深入浅出访存优化</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2024-11-09T16:00:00.000Z" title="发表于 2024-11-10 00:00:00">2024-11-10</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2025-08-27T13:28:02.367Z" title="更新于 2025-08-27 21:28:02">2025-08-27</time></span></div><div class="meta-secondline"><span class="post-meta-separator"></span><span class="post-meta-wordcount"><i class="anzhiyufont anzhiyu-icon-file-word post-meta-icon" title="文章字数"></i><span class="post-meta-label" title="文章字数">字数总计:</span><span class="word-count" title="文章字数">10.4k</span><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-clock post-meta-icon" title="阅读时长"></i><span class="post-meta-label" title="阅读时长">阅读时长:</span><span>45分钟</span></span><span class="post-meta-separator"></span><span class="post-meta-pv-cv" id="" data-flag-title="深入浅出访存优化"><i class="anzhiyufont anzhiyu-icon-fw-eye post-meta-icon"></i><span class="post-meta-label" title="阅读量">阅读量:</span><span id="busuanzi_value_page_pv"><i class="anzhiyufont anzhiyu-icon-spinner anzhiyu-spin"></i></span></span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/4.jpg"></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://ming-z0.github.io/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/"><header><a class="post-meta-categories" href="/categories/CPP/" itemprop="url">CPP</a><a href="/tags/CPP/" tabindex="-1" itemprop="url">CPP</a><a href="/tags/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" tabindex="-1" itemprop="url">访存优化</a><h1 id="CrawlerTitle" itemprop="name headline">深入浅出访存优化</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">Ming</span><time itemprop="dateCreated datePublished" datetime="2024-11-09T16:00:00.000Z" title="发表于 2024-11-10 00:00:00">2024-11-10</time><time itemprop="dateCreated datePublished" datetime="2025-08-27T13:28:02.367Z" title="更新于 2025-08-27 21:28:02">2025-08-27</time></header><p><em>该篇内容基于小彭老师访存优化课程，添加了自己的理解和备注</em></p>
 <h2 id="第0章：前言"><a href="#第0章：前言" class="headerlink" title="第0章：前言"></a>第0章：前言</h2><h3 id="将会用到的工具代码："><a href="#将会用到的工具代码：" class="headerlink" title="将会用到的工具代码："></a>将会用到的工具代码：</h3><ol>
 <li><code>ticktock.h</code>封装TBB计时工具</li>
 </ol>
@@ -203,7 +225,7 @@
 <ol start="3">
 <li>pod 模板类，使得 vector 的 resize 不会零初始化其中的值</li>
 </ol>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> once</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;new&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;utility&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @file pod.h</span></span><br><span class="line"><span class="comment"> * @brief 提供一个简单的模板结构体 `pod`，用于封装一个类型 `T` 的对象，并避免像 `std::vector::resize` 等操作时的零初始化。</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * `pod` 类的目的是避免 `std::vector` 等容器在调用 `resize` 时，默认对扩展的元素进行零初始化。它通过封装类型 `T` 的对象，提供了控制初始化行为的能力。具体来说，`pod` 可以在没有初始化的情况下分配空间，或者只在需要时才初始化对象。</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * 该类具有多个构造函数和赋值操作符，支持直接构造、拷贝、移动赋值等。它还提供了 `emplace` 方法，使得可以在 `m_t` 成员变量上原位构造一个新对象，避免额外的内存分配。</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * 该类通常用于需要避免不必要初始化的场景，例如与 `std::vector` 配合使用时，减少对不必要元素的初始化开销。</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * ### 示例用法：</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * @code</span></span><br><span class="line"><span class="comment"> * // 创建一个 pod 来存储一个整数</span></span><br><span class="line"><span class="comment"> * pod&lt;int&gt; p1(42);  // 使用构造函数直接传入值</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * // 使用 emplace 方法在 pod 中构造新的对象</span></span><br><span class="line"><span class="comment"> * p1.emplace(100);</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * // 用 pod 类型的元素进行容器操作</span></span><br><span class="line"><span class="comment"> * std::vector&lt;pod&lt;int&gt;&gt; vec;</span></span><br><span class="line"><span class="comment"> * vec.resize(10);  // 调用 resize 时不会零初始化新元素</span></span><br><span class="line"><span class="comment"> * @endcode</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * @tparam T 存储的对象类型。</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">pod</span> &#123;</span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">  T <span class="type">m_t</span>;  <span class="comment">///&lt; 存储类型 T 的对象</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 默认构造函数。</span></span><br><span class="line"><span class="comment">   * 默认不初始化 `m_t`，允许在容器中分配空间，但不进行对象的初始化。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="built_in">pod</span>() &#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 移动构造函数。</span></span><br><span class="line"><span class="comment">   * @param p 被移动的 `pod` 对象。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="built_in">pod</span>(pod &amp;&amp;p) : <span class="built_in">m_t</span>(std::<span class="built_in">move</span>(p.<span class="type">m_t</span>)) &#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 拷贝构造函数。</span></span><br><span class="line"><span class="comment">   * @param p 被拷贝的 `pod` 对象。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="built_in">pod</span>(pod <span class="type">const</span> &amp;p) : <span class="built_in">m_t</span>(p.<span class="type">m_t</span>) &#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 移动赋值操作符。</span></span><br><span class="line"><span class="comment">   * @param p 被移动的 `pod` 对象。</span></span><br><span class="line"><span class="comment">   * @return 返回当前对象的引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  pod &amp;<span class="keyword">operator</span>=(pod &amp;&amp;p) &#123;</span><br><span class="line">    <span class="type">m_t</span> = std::<span class="built_in">move</span>(p.<span class="type">m_t</span>);</span><br><span class="line">    <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 拷贝赋值操作符。</span></span><br><span class="line"><span class="comment">   * @param p 被拷贝的 `pod` 对象。</span></span><br><span class="line"><span class="comment">   * @return 返回当前对象的引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  pod &amp;<span class="keyword">operator</span>=(pod <span class="type">const</span> &amp;p) &#123;</span><br><span class="line">    <span class="type">m_t</span> = p.<span class="type">m_t</span>;</span><br><span class="line">    <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 使用右值构造函数来初始化 `m_t`。</span></span><br><span class="line"><span class="comment">   * @param t 被传递的右值对象。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="built_in">pod</span>(T &amp;&amp;t) : <span class="built_in">m_t</span>(std::<span class="built_in">move</span>(t)) &#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 使用左值构造函数来初始化 `m_t`。</span></span><br><span class="line"><span class="comment">   * @param t 被传递的常量左值对象。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="built_in">pod</span>(T <span class="type">const</span> &amp;t) : <span class="built_in">m_t</span>(t) &#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 移动赋值操作符（使用右值）。</span></span><br><span class="line"><span class="comment">   * @param t 被赋值的右值对象。</span></span><br><span class="line"><span class="comment">   * @return 返回当前对象的引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  pod &amp;<span class="keyword">operator</span>=(T &amp;&amp;t) &#123;</span><br><span class="line">    <span class="type">m_t</span> = std::<span class="built_in">move</span>(t);</span><br><span class="line">    <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 拷贝赋值操作符（使用左值）。</span></span><br><span class="line"><span class="comment">   * @param t 被赋值的常量左值对象。</span></span><br><span class="line"><span class="comment">   * @return 返回当前对象的引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  pod &amp;<span class="keyword">operator</span>=(T <span class="type">const</span> &amp;t) &#123;</span><br><span class="line">    <span class="type">m_t</span> = t;</span><br><span class="line">    <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 将 `pod` 对象转换为 `T const &amp;` 类型的引用，用于读取 `m_t`。</span></span><br><span class="line"><span class="comment">   * @return `m_t` 的常量引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">operator</span> T <span class="type">const</span> &amp;() <span class="type">const</span> &#123; <span class="keyword">return</span> <span class="type">m_t</span>; &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 将 `pod` 对象转换为 `T &amp;` 类型的引用，用于修改 `m_t`。</span></span><br><span class="line"><span class="comment">   * @return `m_t` 的非常量引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">operator</span> T &amp;() &#123; <span class="keyword">return</span> <span class="type">m_t</span>; &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 返回 `m_t` 的常量引用。</span></span><br><span class="line"><span class="comment">   * @return `m_t` 的常量引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function">T <span class="type">const</span> &amp;<span class="title">get</span><span class="params">()</span> <span class="type">const</span> </span>&#123; <span class="keyword">return</span> <span class="type">m_t</span>; &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 返回 `m_t` 的非常量引用。</span></span><br><span class="line"><span class="comment">   * @return `m_t` 的非常量引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function">T &amp;<span class="title">get</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> <span class="type">m_t</span>; &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 在 `m_t` 的位置上原址构造一个新对象。</span></span><br><span class="line"><span class="comment">   * </span></span><br><span class="line"><span class="comment">   * 该方法使用原址构造（placement new）在已有内存中构造对象，避免内存重新分配。适用于需要通过构造函数初始化类型 `T` 的场景。</span></span><br><span class="line"><span class="comment">   * </span></span><br><span class="line"><span class="comment">   * @tparam Ts 构造对象 `T` 所需的参数类型。</span></span><br><span class="line"><span class="comment">   * @param ts 构造对象所需的参数。</span></span><br><span class="line"><span class="comment">   * @return 当前 `pod` 对象的引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">template</span> &lt;<span class="keyword">class</span>... Ts&gt;</span><br><span class="line">  <span class="function">pod &amp;<span class="title">emplace</span><span class="params">(Ts &amp;&amp;...ts)</span> </span>&#123;</span><br><span class="line">    ::<span class="keyword">new</span> (&amp;<span class="type">m_t</span>) <span class="built_in">T</span>(std::forward&lt;Ts&gt;(ts)...);</span><br><span class="line">    <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 销毁 `m_t` 对象。</span></span><br><span class="line"><span class="comment">   * 明确调用对象的析构函数，用于手动销毁 `m_t`，释放资源。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function"><span class="type">void</span> <span class="title">destroy</span><span class="params">()</span> </span>&#123; <span class="type">m_t</span>.~<span class="built_in">T</span>(); &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> once</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;new&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;utility&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @file pod.h</span></span><br><span class="line"><span class="comment"> * @brief 提供一个简单的模板结构体 `pod`，用于封装一个类型 `T` 的对象，并避免像 `std::vector::resize` 等操作时的零初始化。</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * `pod` 类的目的是避免 `std::vector` 等容器在调用 `resize` 时，默认对扩展的元素进行零初始化。它通过封装类型 `T` 的对象，提供了控制初始化行为的能力。具体来说，`pod` 可以在没有初始化的情况下分配空间，或者只在需要时才初始化对象。</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 该类具有多个构造函数和赋值操作符，支持直接构造、拷贝、移动赋值等。它还提供了 `emplace` 方法，使得可以在 `m_t` 成员变量上原位构造一个新对象，避免额外的内存分配。</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 该类通常用于需要避免不必要初始化的场景，例如与 `std::vector` 配合使用时，减少对不必要元素的初始化开销。</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * ### 示例用法：</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @code</span></span><br><span class="line"><span class="comment"> * // 创建一个 pod 来存储一个整数</span></span><br><span class="line"><span class="comment"> * pod&lt;int&gt; p1(42);  // 使用构造函数直接传入值</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * // 使用 emplace 方法在 pod 中构造新的对象</span></span><br><span class="line"><span class="comment"> * p1.emplace(100);</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * // 用 pod 类型的元素进行容器操作</span></span><br><span class="line"><span class="comment"> * std::vector&lt;pod&lt;int&gt;&gt; vec;</span></span><br><span class="line"><span class="comment"> * vec.resize(10);  // 调用 resize 时不会零初始化新元素</span></span><br><span class="line"><span class="comment"> * @endcode</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @tparam T 存储的对象类型。</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">pod</span> &#123;</span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">  T <span class="type">m_t</span>;  <span class="comment">///&lt; 存储类型 T 的对象</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 默认构造函数。</span></span><br><span class="line"><span class="comment">   * 默认不初始化 `m_t`，允许在容器中分配空间，但不进行对象的初始化。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="built_in">pod</span>() &#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 移动构造函数。</span></span><br><span class="line"><span class="comment">   * @param p 被移动的 `pod` 对象。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="built_in">pod</span>(pod &amp;&amp;p) : <span class="built_in">m_t</span>(std::<span class="built_in">move</span>(p.<span class="type">m_t</span>)) &#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 拷贝构造函数。</span></span><br><span class="line"><span class="comment">   * @param p 被拷贝的 `pod` 对象。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="built_in">pod</span>(pod <span class="type">const</span> &amp;p) : <span class="built_in">m_t</span>(p.<span class="type">m_t</span>) &#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 移动赋值操作符。</span></span><br><span class="line"><span class="comment">   * @param p 被移动的 `pod` 对象。</span></span><br><span class="line"><span class="comment">   * @return 返回当前对象的引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  pod &amp;<span class="keyword">operator</span>=(pod &amp;&amp;p) &#123;</span><br><span class="line">    <span class="type">m_t</span> = std::<span class="built_in">move</span>(p.<span class="type">m_t</span>);</span><br><span class="line">    <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 拷贝赋值操作符。</span></span><br><span class="line"><span class="comment">   * @param p 被拷贝的 `pod` 对象。</span></span><br><span class="line"><span class="comment">   * @return 返回当前对象的引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  pod &amp;<span class="keyword">operator</span>=(pod <span class="type">const</span> &amp;p) &#123;</span><br><span class="line">    <span class="type">m_t</span> = p.<span class="type">m_t</span>;</span><br><span class="line">    <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 使用右值构造函数来初始化 `m_t`。</span></span><br><span class="line"><span class="comment">   * @param t 被传递的右值对象。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="built_in">pod</span>(T &amp;&amp;t) : <span class="built_in">m_t</span>(std::<span class="built_in">move</span>(t)) &#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 使用左值构造函数来初始化 `m_t`。</span></span><br><span class="line"><span class="comment">   * @param t 被传递的常量左值对象。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="built_in">pod</span>(T <span class="type">const</span> &amp;t) : <span class="built_in">m_t</span>(t) &#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 移动赋值操作符（使用右值）。</span></span><br><span class="line"><span class="comment">   * @param t 被赋值的右值对象。</span></span><br><span class="line"><span class="comment">   * @return 返回当前对象的引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  pod &amp;<span class="keyword">operator</span>=(T &amp;&amp;t) &#123;</span><br><span class="line">    <span class="type">m_t</span> = std::<span class="built_in">move</span>(t);</span><br><span class="line">    <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 拷贝赋值操作符（使用左值）。</span></span><br><span class="line"><span class="comment">   * @param t 被赋值的常量左值对象。</span></span><br><span class="line"><span class="comment">   * @return 返回当前对象的引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  pod &amp;<span class="keyword">operator</span>=(T <span class="type">const</span> &amp;t) &#123;</span><br><span class="line">    <span class="type">m_t</span> = t;</span><br><span class="line">    <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 将 `pod` 对象转换为 `T const &amp;` 类型的引用，用于读取 `m_t`。</span></span><br><span class="line"><span class="comment">   * @return `m_t` 的常量引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">operator</span> T <span class="type">const</span> &amp;() <span class="type">const</span> &#123; <span class="keyword">return</span> <span class="type">m_t</span>; &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 将 `pod` 对象转换为 `T &amp;` 类型的引用，用于修改 `m_t`。</span></span><br><span class="line"><span class="comment">   * @return `m_t` 的非常量引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">operator</span> T &amp;() &#123; <span class="keyword">return</span> <span class="type">m_t</span>; &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 返回 `m_t` 的常量引用。</span></span><br><span class="line"><span class="comment">   * @return `m_t` 的常量引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function">T <span class="type">const</span> &amp;<span class="title">get</span><span class="params">()</span> <span class="type">const</span> </span>&#123; <span class="keyword">return</span> <span class="type">m_t</span>; &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 返回 `m_t` 的非常量引用。</span></span><br><span class="line"><span class="comment">   * @return `m_t` 的非常量引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function">T &amp;<span class="title">get</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> <span class="type">m_t</span>; &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 在 `m_t` 的位置上原址构造一个新对象。</span></span><br><span class="line"><span class="comment">   *</span></span><br><span class="line"><span class="comment">   * 该方法使用原址构造（placement new）在已有内存中构造对象，避免内存重新分配。适用于需要通过构造函数初始化类型 `T` 的场景。</span></span><br><span class="line"><span class="comment">   *</span></span><br><span class="line"><span class="comment">   * @tparam Ts 构造对象 `T` 所需的参数类型。</span></span><br><span class="line"><span class="comment">   * @param ts 构造对象所需的参数。</span></span><br><span class="line"><span class="comment">   * @return 当前 `pod` 对象的引用。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">template</span> &lt;<span class="keyword">class</span>... Ts&gt;</span><br><span class="line">  <span class="function">pod &amp;<span class="title">emplace</span><span class="params">(Ts &amp;&amp;...ts)</span> </span>&#123;</span><br><span class="line">    ::<span class="keyword">new</span> (&amp;<span class="type">m_t</span>) <span class="built_in">T</span>(std::forward&lt;Ts&gt;(ts)...);</span><br><span class="line">    <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * @brief 销毁 `m_t` 对象。</span></span><br><span class="line"><span class="comment">   * 明确调用对象的析构函数，用于手动销毁 `m_t`，释放资源。</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function"><span class="type">void</span> <span class="title">destroy</span><span class="params">()</span> </span>&#123; <span class="type">m_t</span>.~<span class="built_in">T</span>(); &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 
 <h3 id="案例："><a href="#案例：" class="headerlink" title="案例："></a>案例：</h3><p>运行下面的代码：</p>
 <ul>
@@ -347,7 +369,7 @@
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;benchmark/benchmark.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;omp.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;x86intrin.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;array&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cmath&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdlib&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstring&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> n = <span class="number">1</span> &lt;&lt; <span class="number">28</span>;</span><br><span class="line"></span><br><span class="line"><span class="function">std::vector&lt;<span class="type">float</span>&gt; <span class="title">a</span><span class="params">(n)</span></span>;  <span class="comment">// 1GB</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">float</span> <span class="title">funcC</span><span class="params">(<span class="type">float</span> x)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">sinf</span>(x) + <span class="built_in">cosf</span>((x + <span class="number">1</span>) * x) * <span class="built_in">sqrtf</span>(x * (x + <span class="number">1</span>));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">BM_1funcC</span><span class="params">(benchmark::State &amp;bm)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">auto</span> _ : bm) &#123;</span><br><span class="line">    <span class="built_in">omp_set_num_threads</span>(<span class="number">1</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> omp parallel for</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; n; i++) &#123;</span><br><span class="line">      a[i] = <span class="built_in">funcC</span>(a[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    benchmark::<span class="built_in">DoNotOptimize</span>(a);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">BENCHMARK</span>(BM_1funcC);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">BM_2funcC</span><span class="params">(benchmark::State &amp;bm)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">auto</span> _ : bm) &#123;</span><br><span class="line">    <span class="built_in">omp_set_num_threads</span>(<span class="number">2</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> omp parallel for</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; n; i++) &#123;</span><br><span class="line">      a[i] = <span class="built_in">funcC</span>(a[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    benchmark::<span class="built_in">DoNotOptimize</span>(a);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">BENCHMARK</span>(BM_2funcC);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">BM_4funcC</span><span class="params">(benchmark::State &amp;bm)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">auto</span> _ : bm) &#123;</span><br><span class="line">    <span class="built_in">omp_set_num_threads</span>(<span class="number">4</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> omp parallel for</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; n; i++) &#123;</span><br><span class="line">      a[i] = <span class="built_in">funcC</span>(a[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    benchmark::<span class="built_in">DoNotOptimize</span>(a);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">BENCHMARK</span>(BM_4funcC);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">BM_6funcC</span><span class="params">(benchmark::State &amp;bm)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">auto</span> _ : bm) &#123;</span><br><span class="line">    <span class="built_in">omp_set_num_threads</span>(<span class="number">6</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> omp parallel for</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; n; i++) &#123;</span><br><span class="line">      a[i] = <span class="built_in">funcC</span>(a[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    benchmark::<span class="built_in">DoNotOptimize</span>(a);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">BENCHMARK</span>(BM_6funcC);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">BM_8funcC</span><span class="params">(benchmark::State &amp;bm)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">auto</span> _ : bm) &#123;</span><br><span class="line">    <span class="built_in">omp_set_num_threads</span>(<span class="number">8</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> omp parallel for</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; n; i++) &#123;</span><br><span class="line">      a[i] = <span class="built_in">funcC</span>(a[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    benchmark::<span class="built_in">DoNotOptimize</span>(a);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">BENCHMARK</span>(BM_8funcC);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">BM_10funcC</span><span class="params">(benchmark::State &amp;bm)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">auto</span> _ : bm) &#123;</span><br><span class="line">    <span class="built_in">omp_set_num_threads</span>(<span class="number">10</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> omp parallel for</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; n; i++) &#123;</span><br><span class="line">      a[i] = <span class="built_in">funcC</span>(a[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    benchmark::<span class="built_in">DoNotOptimize</span>(a);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">BENCHMARK</span>(BM_10funcC);</span><br><span class="line"></span><br><span class="line"><span class="built_in">BENCHMARK_MAIN</span>();</span><br></pre></td></tr></table></figure>
 
 <p>经过测试可以看到：</p>
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241110215658275.png" alt="image-20241110215658275" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241110215658275.png" alt="image-20241110215658275"></p>
 <ul>
 <li><p>funcA用了2核就饱和。</p>
 </li>
@@ -368,7 +390,7 @@
 <li>我此时在WSL2中进行测试，无法使用 dmidecode 因此我只能在Windows中使用Powershell进行测试</li>
 <li>Linux中的输出结果会与下面的不同，请自行测试</li>
 </ul>
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241110221039722.png" alt="image-20241110221039722" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241110221039722.png" alt="image-20241110221039722"></p>
 <p>可以看到我的电脑上插了两根内存，频率为3200MHz，数据宽度是64位（8字节）</p>
 <p>理论极限带宽 &#x3D; 频率 * 位宽 * 数量(其实是通道数)</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">3200 * 8 * 2 = 51200 MB/s = 51.2 GB/s</span><br></pre></td></tr></table></figure>
@@ -393,26 +415,26 @@
 <p><strong>结果分析：</strong></p>
 <p>可以看到，当数据量较小时，实际带宽反而超出了理论带宽。这是因为较小的数据集能够完全缓存到 CPU 的高速缓存中，避免了从内存访问的瓶颈。</p>
 <p>当数据量增加时，带宽逐渐趋近于理论带宽，特别是数据量大到无法完全装入 L1 和 L2 缓存时，性能受限于内存带宽。</p>
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241112174550234.png" alt="image-20241112174550234" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241112174550234.png" alt="image-20241112174550234"></p>
 <h3 id="CPU内部的高速缓存"><a href="#CPU内部的高速缓存" class="headerlink" title="CPU内部的高速缓存"></a>CPU内部的高速缓存</h3><p>CPU 厂商早已认识到内存延迟较高的问题，因此在 CPU 内部引入了多个级别的缓存，以减少访问内存时的延迟。缓存通常分为三级：</p>
 <ol>
 <li><strong>L1 缓存</strong>：速度最快，容量较小，通常为 32KB（每个核心独立）。</li>
 <li><strong>L2 缓存</strong>：较 L1 缓存大，约为 512KB（每个核心独立）。</li>
 <li><strong>L3 缓存</strong>：最大，通常为 8MB 到 16MB，所有核心共享。</li>
 </ol>
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241112173231303.png" alt="image-20241112173231303" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241112173231303.png" alt="image-20241112173231303"></p>
 <h3 id="CPU-缓存的工作原理"><a href="#CPU-缓存的工作原理" class="headerlink" title="CPU 缓存的工作原理"></a>CPU 缓存的工作原理</h3><p>当 CPU 请求数据时，它首先检查 L1 缓存。如果数据不在 L1 缓存中，它会检查 L2 缓存，然后是 L3 缓存，最后从主内存加载。如果数据已经缓存，则直接从缓存中读取，显著减少访问延迟。</p>
 <h3 id="缓存的分级结构"><a href="#缓存的分级结构" class="headerlink" title="缓存的分级结构"></a>缓存的分级结构</h3><p>注意，从下图我们可以看到，L1和L2缓存是每个核心都有一个，L3才是多个核心共用。</p>
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241112173331348.png" alt="image-20241112173331348" loading='lazy'></p>
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241112173313565.png" alt="image-20241112173313565" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241112173331348.png" alt="image-20241112173331348"></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241112173313565.png" alt="image-20241112173313565"></p>
 <h3 id="查看高速缓存大小：lscpu"><a href="#查看高速缓存大小：lscpu" class="headerlink" title="查看高速缓存大小：lscpu"></a>查看高速缓存大小：lscpu</h3><p>可以看到我们 x86 电脑的缓存结构分为三级：</p>
 <p>一级缓存分为<strong>数据缓存</strong>和<strong>指令缓存</strong>，其中数据缓存有 32 KB，8 个物理核心每个都有一个，总共 256 KB。而指令缓存的大小刚好和数据缓存一样也是 256 KB。</p>
 <p>二级缓存有 512 KB，8 个物理核心每个都有一个，总共 4 MB。</p>
 <p>三级缓存由各个物理核心共享，总共 16 MB。</p>
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241112173752694.png" alt="image-20241112173752694" loading='lazy'></p>
-<h3 id="通过图形界面查看拓扑结构：lstopo"><a href="#通过图形界面查看拓扑结构：lstopo" class="headerlink" title="通过图形界面查看拓扑结构：lstopo"></a>通过图形界面查看拓扑结构：lstopo</h3><p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241112173832214.png" alt="image-20241112173832214" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241112173752694.png" alt="image-20241112173752694"></p>
+<h3 id="通过图形界面查看拓扑结构：lstopo"><a href="#通过图形界面查看拓扑结构：lstopo" class="headerlink" title="通过图形界面查看拓扑结构：lstopo"></a>通过图形界面查看拓扑结构：lstopo</h3><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241112173832214.png" alt="image-20241112173832214"></p>
 <h3 id="如何分析带宽测试结果"><a href="#如何分析带宽测试结果" class="headerlink" title="如何分析带宽测试结果"></a>如何分析带宽测试结果</h3><p>可以看到刚刚两个出现转折的点，也是在二级缓存和三级缓存的大小附近。</p>
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241112174550234.png" alt="image-20241112174550234" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241112174550234.png" alt="image-20241112174550234"></p>
 <p>根据上面的图表，可以观察到在特定数据量下（如 128KB 到 16MB 区间），性能出现了转折点。这正是由于 CPU 缓存大小的影响：</p>
 <ul>
 <li>当数据小到可以完全装入 <strong>L2 缓存</strong> 时，带宽接近 L2 缓存的带宽限制。</li>
@@ -439,40 +461,40 @@
 <ul>
 <li>至于从128步幅(512字节)之后的效果，就需要考虑多级缓存的原因</li>
 </ul>
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241115221030781.png" alt="image-20241115221030781" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241115221030781.png" alt="image-20241115221030781"></p>
 <h3 id="缓存行决定数据的粒度"><a href="#缓存行决定数据的粒度" class="headerlink" title="缓存行决定数据的粒度"></a>缓存行决定数据的粒度</h3><p>结论：访问内存的用时，和访问的字节数量无关，和访问的每个字节所在的缓存行数量有关。</p>
 <p>可见，能否很好的利用缓存，和程序访问内存的<strong>空间局域性</strong>有关。</p>
 <p>所以我们设计数据结构时，应该把数据存储的尽可能紧凑，不要松散排列。最好每个缓存行里要么有数据，要么没数据，避免读取缓存行时浪费一部分空间。</p>
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241113210933560.png" alt="image-20241113210933560" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241113210933560.png" alt="image-20241113210933560"></p>
 <h3 id="结构体布局分析"><a href="#结构体布局分析" class="headerlink" title="结构体布局分析"></a>结构体布局分析</h3><ol>
 <li><strong>结构体的基础布局</strong></li>
 </ol>
 <p>定义一个结构体 <code>MyClass</code>：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">MyClass</span>&#123;</span><br><span class="line">    <span class="type">float</span> x;</span><br><span class="line">    <span class="type">float</span> y;</span><br><span class="line">    <span class="type">float</span> z;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">MyClass mc;</span><br></pre></td></tr></table></figure>
 
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241113211001105.png" alt="image-20241113211001105" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241113211001105.png" alt="image-20241113211001105"></p>
 <ol start="2">
 <li><strong>AOS（Array of Struct）模式</strong></li>
 </ol>
 <p>在 AOS 模式下，每个对象的属性存储在一起：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">MyClass</span>&#123;</span><br><span class="line">    <span class="type">float</span> x;</span><br><span class="line">    <span class="type">float</span> y;</span><br><span class="line">    <span class="type">float</span> z;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">MyClass mc[<span class="number">4</span>];</span><br></pre></td></tr></table></figure>
 
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241113211139056.png" alt="image-20241113211139056" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241113211139056.png" alt="image-20241113211139056"></p>
 <p>或者使用vector：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">MyClass</span>&#123;</span><br><span class="line">    <span class="type">float</span> x;</span><br><span class="line">    <span class="type">float</span> y;</span><br><span class="line">    <span class="type">float</span> z;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">std::vector&lt;MyClass&gt; <span class="title">mc</span><span class="params">(<span class="number">4</span>)</span></span>;</span><br></pre></td></tr></table></figure>
 
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241113211207443.png" alt="image-20241113211207443" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241113211207443.png" alt="image-20241113211207443"></p>
 <ol start="3">
 <li><strong>SOA（Struct of Array）模式</strong></li>
 </ol>
 <p>在 SOA 模式下，各属性分开存储在独立的数组中：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">MyClass</span>&#123;</span><br><span class="line">    <span class="type">float</span> x[<span class="number">4</span>];</span><br><span class="line">    <span class="type">float</span> y[<span class="number">4</span>];</span><br><span class="line">    <span class="type">float</span> z[<span class="number">4</span>];</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">MyClass mc;</span><br></pre></td></tr></table></figure>
 
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241113211346529.png" alt="image-20241113211346529" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241113211346529.png" alt="image-20241113211346529"></p>
 <h3 id="AOS-与-SOA-的内存布局差异"><a href="#AOS-与-SOA-的内存布局差异" class="headerlink" title="AOS 与 SOA 的内存布局差异"></a>AOS 与 SOA 的内存布局差异</h3><ul>
 <li>AOS（Array of Struct）单个对象的属性紧挨着存:</li>
 </ul>
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241120213903417.png" alt="image-20241120213903417" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241120213903417.png" alt="image-20241120213903417"></p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xyzxyzxyzxyz</span><br></pre></td></tr></table></figure>
 
 <ul>
@@ -480,11 +502,11 @@
 </ul>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xxxxyyyyzzzz</span><br></pre></td></tr></table></figure>
 
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241120213853949.png" alt="image-20241120213853949" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241120213853949.png" alt="image-20241120213853949"></p>
 <p>AOS 必须对齐到 2 的幂才高效，SOA 就不需要。</p>
 <p>AOS 符合直觉，不一定要存储在数组这种线性结构，而 SOA 可能无法保证多个数组大小一致。</p>
 <p>SOA 不符合直觉，但通常是更高效的！</p>
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241113211423292.png" alt="image-20241113211423292" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241113211423292.png" alt="image-20241113211423292"></p>
 <h3 id="AOS-和-SOA-的性能对比"><a href="#AOS-和-SOA-的性能对比" class="headerlink" title="AOS 和 SOA 的性能对比"></a>AOS 和 SOA 的性能对比</h3><p>在以下代码中进行 AOS 与 SOA 访问的性能基准测试：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> n = <span class="number">1</span> &lt;&lt; <span class="number">26</span>;  <span class="comment">// 512MB</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">BM_aos</span><span class="params">(benchmark::State &amp;bm)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">struct</span> <span class="title class_">MyClass</span> &#123;</span><br><span class="line">    <span class="type">float</span> x;</span><br><span class="line">    <span class="type">float</span> y;</span><br><span class="line">    <span class="type">float</span> z;</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="function">std::vector&lt;MyClass&gt; <span class="title">mc</span><span class="params">(n)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">auto</span> _ : bm) &#123;</span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> omp parallel for</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; n; i++) &#123;</span><br><span class="line">      mc[i].x = mc[i].x + mc[i].y;</span><br><span class="line">    &#125;</span><br><span class="line">    benchmark::<span class="built_in">DoNotOptimize</span>(mc);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">BENCHMARK</span>(BM_aos);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">BM_soa</span><span class="params">(benchmark::State &amp;bm)</span> </span>&#123;</span><br><span class="line">  <span class="function">std::vector&lt;<span class="type">float</span>&gt; <span class="title">mc_x</span><span class="params">(n)</span></span>;</span><br><span class="line">  <span class="function">std::vector&lt;<span class="type">float</span>&gt; <span class="title">mc_y</span><span class="params">(n)</span></span>;</span><br><span class="line">  <span class="function">std::vector&lt;<span class="type">float</span>&gt; <span class="title">mc_z</span><span class="params">(n)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">auto</span> _ : bm) &#123;</span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> omp parallel for</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; n; i++) &#123;</span><br><span class="line">      mc_x[i] = mc_x[i] + mc_y[i];</span><br><span class="line">    &#125;</span><br><span class="line">    benchmark::<span class="built_in">DoNotOptimize</span>(mc_x);</span><br><span class="line">    benchmark::<span class="built_in">DoNotOptimize</span>(mc_y);</span><br><span class="line">    benchmark::<span class="built_in">DoNotOptimize</span>(mc_z);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">BENCHMARK</span>(BM_soa);</span><br><span class="line"><span class="comment">// ------------------------------------------------------</span></span><br><span class="line"><span class="comment">// Benchmark            Time             CPU   Iterations</span></span><br><span class="line"><span class="comment">// ------------------------------------------------------</span></span><br><span class="line"><span class="comment">// BM_aos        99661522 ns     99652483 ns            6</span></span><br><span class="line"><span class="comment">// BM_soa        38090806 ns     37725700 ns           18</span></span><br></pre></td></tr></table></figure>
 
@@ -492,7 +514,7 @@
 <p>而这里的AOS，它的MyClass有三个float，大小仅为12字节。</p>
 <p>所以当修改MyClass的x属性时，必须读取整个MyClass，仅仅修改其中的x属性，然后写回。这就浪费了：y的写、z的写、z的读。实际用上的只有：x的读，y的读，x的写。浪费了50%带宽。</p>
 <p>而SOA把三个属性分开存，每个属性作为独立的数组，稠密存储。这样当用不到z的时候，z数组就完全不会被读取，不会占用内存带宽，从而带宽利用率是100%，因此比AOS快了3倍。</p>
-<h3 id="AOSOA：结合-AOS-与-SOA-优势"><a href="#AOSOA：结合-AOS-与-SOA-优势" class="headerlink" title="AOSOA：结合 AOS 与 SOA 优势"></a>AOSOA：结合 AOS 与 SOA 优势</h3><p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241120213828423.png" alt="image-20241120213828423" loading='lazy'></p>
+<h3 id="AOSOA：结合-AOS-与-SOA-优势"><a href="#AOSOA：结合-AOS-与-SOA-优势" class="headerlink" title="AOSOA：结合 AOS 与 SOA 优势"></a>AOSOA：结合 AOS 与 SOA 优势</h3><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241120213828423.png" alt="image-20241120213828423"></p>
 <p>可以采用 AOS 外层结构，内部 SOA 的方式组织数据，即 AOSOA。这种布局在高层次上是 AOS，但每个元素内部分为 SOA。</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">BM_aosoa</span><span class="params">(benchmark::State &amp;bm)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">struct</span> <span class="title class_">MyClass</span> &#123;</span><br><span class="line">    <span class="type">float</span> x[<span class="number">1024</span>];</span><br><span class="line">    <span class="type">float</span> y[<span class="number">1024</span>];</span><br><span class="line">    <span class="type">float</span> z[<span class="number">1024</span>];</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="function">std::vector&lt;MyClass&gt; <span class="title">mc</span><span class="params">(n / <span class="number">1024</span>)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">auto</span> _ : bm) &#123;</span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> omp parallel for</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; n / <span class="number">1024</span>; i++) &#123;</span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> omp simd</span></span><br><span class="line">      <span class="keyword">for</span> (<span class="type">size_t</span> j = <span class="number">0</span>; j &lt; <span class="number">1024</span>; j++) &#123;</span><br><span class="line">        mc[i].x[j] = mc[i].x[j] + mc[i].y[j];</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    benchmark::<span class="built_in">DoNotOptimize</span>(mc);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">BENCHMARK</span>(BM_aosoa);</span><br><span class="line"><span class="comment">// BM_aosoa      40478390 ns     39411800 ns           17</span></span><br></pre></td></tr></table></figure>
 
@@ -541,10 +563,167 @@
 <p>这里第一个参数是要预取的地址（最好对齐到缓存行），第二个参数 <code>_MM_HINT_T0</code> 代表预取数据到一级缓存，<code>_MM_HINT_T1</code> 代表只取到二级缓存，<code>_MM_HINT_T2</code> 代表三级缓存；<code>_MM_HINT_NTA</code> 则是预取到非临时缓冲结构中，可以最小化对缓存的污染，但是必须很快被用上。</p>
 <h3 id="重新理解-mem-bound：延迟隐藏"><a href="#重新理解-mem-bound：延迟隐藏" class="headerlink" title="重新理解 mem-bound：延迟隐藏"></a>重新理解 mem-bound：延迟隐藏</h3><p>之前提到，1次浮点读写必须伴随着32次浮点加法的运算量，否则和只有0次加法的耗时没有任何区别，即内存带宽成唯一瓶颈的mem-bound。可是按我们理解，“1次读写+0次加法”应该会比“1次读写+8次加法”快一点点吧，因为8次加法尽管比1次读写快很多，但是毕竟还是有时间的啊，为什么会几乎没有任何区别？</p>
 <p>这都是得益于CPU的预取机制，他能够在等待a[i+1]的内存数据抵达时，默默地做着a[i]的计算，从而只要计算的延迟小于内存的延迟，延迟就被隐藏起来了，而不必等内存抵达了再算。这就是为什么有些运算量不足32次的程序还是会无法达到mem-bound，手动预取以后才能达到，就是因为硬件预取预测失败，导致不得不等内存抵达了才能算，导致延迟隐藏失败。隐藏成功：</p>
-<p><img src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241120220914072.png" alt="image-20241120220914072" loading='lazy'></p>
-<h3 id="为什么写入比读取慢？"><a href="#为什么写入比读取慢？" class="headerlink" title="为什么写入比读取慢？"></a>为什么写入比读取慢？</h3></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://ming-z0.github.io">Ming</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://ming-z0.github.io/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/">https://ming-z0.github.io/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://ming-z0.github.io" target="_blank">MINGの部落格</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/C/">C++</a><a class="post-meta__tags" href="/tags/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/">访存优化</a></div><div class="post-share"><div class="social-share" data-image="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/8.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/19.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">C++协程入门</div></div><div class="info-2"><div class="info-item-1">C++20协程入门什么是协程？简单来说：协程是一个可以暂停和恢复的函数。 如果从传统函数的角度来看，暂停意味着线程会停止执行。那么，协程与普通函数的区别在哪里呢？关键在于：  普通函数是线程紧密相关的，函数的状态依赖于线程栈； 协程是线程无关的，它的状态独立于任何线程，可以在不同的线程间切换。  为了更好地理解这一点，我们可以先回顾一下函数调用的机制。每当调用一个普通函数时，当前线程的栈会保存这个函数的状态（例如函数参数、局部变量等）。这一过程通过栈顶指针的移动来完成。例如，函数 Foo() 调用 Bar() 的过程如下：  在这个过程中：  从 地址3 到 地址2 的内存空间分配给...</div></div></div></a><a class="pagination-related" href="/2024/11/09/CPP/%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B/TBB%E5%BC%80%E5%90%AF%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%97%85/" title="TBB开启并行编程之旅"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/5.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">TBB开启并行编程之旅</div></div><div class="info-2"><div class="info-item-1">...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2024/10/17/CPP/CMake/%E7%8E%B0%E4%BB%A3CMake/" title="现代CMake"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/15.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-17</div><div class="info-item-2">现代CMake</div></div><div class="info-2"><div class="info-item-1"> 现代CMake指的是 CMake 3.x  古代CMake指的是 CMake 2.x  现代CMake比古代CMake使用更加方便，功能更加强大   命令行小技巧传统构建方式对比：1234567891011# 古代 CMakemkdir -p build	# 创建build目录cd build	# 切换到build目录cmake ..	# 在build目录运行cmake &lt;源码目录&gt;生成Makefilemake -j4	# 执行本地的构建系统 make 真正开始构建（4进程并行）make install	# 让本地构建系统执行安装步骤# 现代 CMakecmake -B...</div></div></div></a><a class="pagination-related" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/19.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-11-20</div><div class="info-item-2">C++协程入门</div></div><div class="info-2"><div class="info-item-1">C++20协程入门什么是协程？简单来说：协程是一个可以暂停和恢复的函数。 如果从传统函数的角度来看，暂停意味着线程会停止执行。那么，协程与普通函数的区别在哪里呢？关键在于：  普通函数是线程紧密相关的，函数的状态依赖于线程栈； 协程是线程无关的，它的状态独立于任何线程，可以在不同的线程间切换。  为了更好地理解这一点，我们可以先回顾一下函数调用的机制。每当调用一个普通函数时，当前线程的栈会保存这个函数的状态（例如函数参数、局部变量等）。这一过程通过栈顶指针的移动来完成。例如，函数 Foo() 调用 Bar() 的过程如下：  在这个过程中：  从 地址3 到 地址2 的内存空间分配给...</div></div></div></a><a class="pagination-related" href="/2024/10/21/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%B8%80%E3%80%81%E5%89%8D%E8%A8%80/" title="全面理解STL-前言"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/3.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-21</div><div class="info-item-2">全面理解STL-前言</div></div><div class="info-2"><div class="info-item-1">C++ 标准模板库（Standard Template Library，STL）是一套功能强大的 C++ 模板类和函数的集合，它提供了一系列通用的、可复用的算法和数据结构。 STL 的设计基于泛型编程，这意味着使用模板可以编写出独立于任何特定数据类型的代码。 STL 分为多个组件，包括容器（Containers）、迭代器（Iterators）、算法（Algorithms）、函数对象（Function Objects）和适配器（Adapters）等。 使用 STL 的好处:  代码复用：STL 提供了大量的通用数据结构和算法，可以减少重复编写代码的工作。 性能优化：STL...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div class="comment-switch"><span class="first-comment">Twikoo</span><span id="switch-btn"></span><span class="second-comment">Livere</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div><div><div id="lv-container" data-id="city" data-uid="MTAyMC82MDIzOS8zNjcwNw"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Ming</div><div class="author-info-description">一个记录、分享自己学习过程的博客</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">28</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">15</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">9</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/ming-z0" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:ming-zhanglu@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到MINGの部落格！</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC0%E7%AB%A0%EF%BC%9A%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">第0章：前言</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%86%E4%BC%9A%E7%94%A8%E5%88%B0%E7%9A%84%E5%B7%A5%E5%85%B7%E4%BB%A3%E7%A0%81%EF%BC%9A"><span class="toc-number">1.1.</span> <span class="toc-text">将会用到的工具代码：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B%EF%BC%9A"><span class="toc-number">1.2.</span> <span class="toc-text">案例：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC1%E7%AB%A0%EF%BC%9A%E5%86%85%E5%AD%98%E5%B8%A6%E5%AE%BD"><span class="toc-number">2.</span> <span class="toc-text">第1章：内存带宽</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#cpu-bound-%E4%B8%8E-memory-bound"><span class="toc-number">2.1.</span> <span class="toc-text">cpu-bound 与 memory-bound</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%AE%E7%82%B9%E5%8A%A0%E6%B3%95%E7%9A%84%E8%AE%A1%E7%AE%97%E9%87%8F"><span class="toc-number">2.2.</span> <span class="toc-text">浮点加法的计算量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E6%93%8D%E4%BD%9C%E6%89%80%E8%8A%B1%E8%B4%B9%E7%9A%84%E6%97%B6%E9%97%B4"><span class="toc-number">2.3.</span> <span class="toc-text">常见操作所花费的时间</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%9A%E5%B0%91%E8%AE%A1%E7%AE%97%E9%87%8F%E6%89%8D%E7%AE%97%E5%A4%9A%EF%BC%9F"><span class="toc-number">2.4.</span> <span class="toc-text">多少计算量才算多？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A0%E9%80%9F%E6%9B%B2%E7%BA%BF"><span class="toc-number">2.5.</span> <span class="toc-text">加速曲线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E4%BF%A1%E6%81%AF%E6%9F%A5%E7%9C%8B%E5%B7%A5%E5%85%B7%EF%BC%9Admidecode"><span class="toc-number">2.6.</span> <span class="toc-text">内存信息查看工具：dmidecode</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%AA%8C%E8%AF%81-parallel-add-%E6%98%AF%E5%90%A6%E5%85%85%E5%88%86%E5%88%A9%E7%94%A8%E4%BA%86%E5%B8%A6%E5%AE%BD"><span class="toc-number">2.7.</span> <span class="toc-text">验证 parallel_add 是否充分利用了带宽</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E7%AB%A0%EF%BC%9A%E7%BC%93%E5%AD%98%E4%B8%8E%E5%B1%80%E5%9F%9F%E6%80%A7"><span class="toc-number">3.</span> <span class="toc-text">第二章：缓存与局域性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8D%E5%90%8C%E6%95%B0%E6%8D%AE%E9%87%8F%E5%AF%B9%E5%B8%A6%E5%AE%BD%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="toc-number">3.1.</span> <span class="toc-text">不同数据量对带宽的影响</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CPU%E5%86%85%E9%83%A8%E7%9A%84%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98"><span class="toc-number">3.2.</span> <span class="toc-text">CPU内部的高速缓存</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CPU-%E7%BC%93%E5%AD%98%E7%9A%84%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="toc-number">3.3.</span> <span class="toc-text">CPU 缓存的工作原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E7%9A%84%E5%88%86%E7%BA%A7%E7%BB%93%E6%9E%84"><span class="toc-number">3.4.</span> <span class="toc-text">缓存的分级结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98%E5%A4%A7%E5%B0%8F%EF%BC%9Alscpu"><span class="toc-number">3.5.</span> <span class="toc-text">查看高速缓存大小：lscpu</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%9A%E8%BF%87%E5%9B%BE%E5%BD%A2%E7%95%8C%E9%9D%A2%E6%9F%A5%E7%9C%8B%E6%8B%93%E6%89%91%E7%BB%93%E6%9E%84%EF%BC%9Alstopo"><span class="toc-number">3.6.</span> <span class="toc-text">通过图形界面查看拓扑结构：lstopo</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%88%86%E6%9E%90%E5%B8%A6%E5%AE%BD%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="toc-number">3.7.</span> <span class="toc-text">如何分析带宽测试结果</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%9C%BA%E5%88%B6%EF%BC%9A%E8%AF%BB%E5%8F%96%E6%93%8D%E4%BD%9C"><span class="toc-number">3.8.</span> <span class="toc-text">缓存的工作机制：读取操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%9C%BA%E5%88%B6%EF%BC%9A%E5%86%99%E6%93%8D%E4%BD%9C"><span class="toc-number">3.9.</span> <span class="toc-text">缓存的工作机制：写操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9E%E7%BB%AD%E8%AE%BF%E9%97%AE%E4%B8%8E%E8%B7%A8%E6%AD%A5%E8%AE%BF%E9%97%AE"><span class="toc-number">3.10.</span> <span class="toc-text">连续访问与跨步访问</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E8%A1%8C%E5%86%B3%E5%AE%9A%E6%95%B0%E6%8D%AE%E7%9A%84%E7%B2%92%E5%BA%A6"><span class="toc-number">3.11.</span> <span class="toc-text">缓存行决定数据的粒度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%93%E6%9E%84%E4%BD%93%E5%B8%83%E5%B1%80%E5%88%86%E6%9E%90"><span class="toc-number">3.12.</span> <span class="toc-text">结构体布局分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#AOS-%E4%B8%8E-SOA-%E7%9A%84%E5%86%85%E5%AD%98%E5%B8%83%E5%B1%80%E5%B7%AE%E5%BC%82"><span class="toc-number">3.13.</span> <span class="toc-text">AOS 与 SOA 的内存布局差异</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#AOS-%E5%92%8C-SOA-%E7%9A%84%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94"><span class="toc-number">3.14.</span> <span class="toc-text">AOS 和 SOA 的性能对比</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#AOSOA%EF%BC%9A%E7%BB%93%E5%90%88-AOS-%E4%B8%8E-SOA-%E4%BC%98%E5%8A%BF"><span class="toc-number">3.15.</span> <span class="toc-text">AOSOA：结合 AOS 与 SOA 优势</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B3%A8%E6%84%8F%EF%BC%8C%E5%86%85%E9%83%A8SOA%E7%9A%84%E5%B0%BA%E5%AF%B8%E4%B8%8D%E5%AE%9C%E5%A4%AA%E5%B0%8F"><span class="toc-number">3.15.1.</span> <span class="toc-text">注意，内部SOA的尺寸不宜太小</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A6%82%E6%9E%9C%E6%AF%8F%E4%B8%AA%E5%B1%9E%E6%80%A7%E9%83%BD%E8%A6%81%E8%AE%BF%E9%97%AE%E5%88%B0%EF%BC%8C%E9%82%A3%E8%BF%98%E6%98%AFAOS%E6%AF%94%E8%BE%83%E5%A5%BD%EF%BC%88AOSOA%E4%B9%9F%E4%B8%8D%E8%B5%96%EF%BC%89"><span class="toc-number">3.15.2.</span> <span class="toc-text">如果每个属性都要访问到，那还是AOS比较好（AOSOA也不赖）</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%93%E8%AE%BA%EF%BC%9AAOS%E3%80%81SOA%E3%80%81AOSOA-%E5%93%AA%E5%AE%B6%E5%BC%BA"><span class="toc-number">3.16.</span> <span class="toc-text">结论：AOS、SOA、AOSOA 哪家强</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E7%AB%A0%EF%BC%9A%E9%A2%84%E5%8F%96%E4%B8%8E%E7%9B%B4%E5%86%99"><span class="toc-number">4.</span> <span class="toc-text">第三章：预取与直写</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%BA%E5%BA%8F%E8%AE%BF%E9%97%AE%E4%B8%8E%E9%9A%8F%E6%9C%BA%E8%AE%BF%E9%97%AE"><span class="toc-number">4.1.</span> <span class="toc-text">顺序访问与随机访问</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%EF%BC%9A%E6%8C%8964%E5%AD%97%E8%8A%82%E5%88%86%E5%9D%97%E5%9C%B0%E9%9A%8F%E6%9C%BA%E8%AE%BF%E9%97%AE"><span class="toc-number">4.2.</span> <span class="toc-text">解决：按64字节分块地随机访问</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E8%A1%8C%E9%A2%84%E5%8F%96%E6%8A%80%E6%9C%AF%EF%BC%9A%E5%90%83%E7%9D%80%E4%B8%80%E7%A2%97%E9%A5%AD%E7%9A%84%E5%90%8C%E6%97%B6%EF%BC%8C%E5%85%88%E5%96%8A%E5%A6%88%E5%A6%88%E7%83%A7%E4%B8%8B%E4%B8%80%E7%A2%97%E9%A5%AD"><span class="toc-number">4.3.</span> <span class="toc-text">缓存行预取技术：吃着一碗饭的同时，先喊妈妈烧下一碗饭</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%EF%BC%9A%E6%8C%89%E6%9B%B4%E5%A4%A7%E7%9A%84%E5%88%86%E5%9D%97%EF%BC%884096%E5%AD%97%E8%8A%82%EF%BC%89%E9%9A%8F%E6%9C%BA%E8%AE%BF%E9%97%AE"><span class="toc-number">4.4.</span> <span class="toc-text">解决：按更大的分块（4096字节）随机访问</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%B5%E5%AF%B9%E9%BD%90%E7%9A%84%E9%87%8D%E8%A6%81%E6%80%A7"><span class="toc-number">4.5.</span> <span class="toc-text">页对齐的重要性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E9%A2%84%E5%8F%96%EF%BC%9A-mm-prefetch"><span class="toc-number">4.6.</span> <span class="toc-text">手动预取：_mm_prefetch</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E6%96%B0%E7%90%86%E8%A7%A3-mem-bound%EF%BC%9A%E5%BB%B6%E8%BF%9F%E9%9A%90%E8%97%8F"><span class="toc-number">4.7.</span> <span class="toc-text">重新理解 mem-bound：延迟隐藏</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%86%99%E5%85%A5%E6%AF%94%E8%AF%BB%E5%8F%96%E6%85%A2%EF%BC%9F"><span class="toc-number">4.8.</span> <span class="toc-text">为什么写入比读取慢？</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/08/21/%E9%9D%A2%E8%AF%95/resume/" title="无标题"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/18.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="无标题"/></a><div class="content"><a class="title" href="/2025/08/21/%E9%9D%A2%E8%AF%95/resume/" title="无标题">无标题</a><time datetime="2025-08-21T06:22:29.836Z" title="发表于 2025-08-21 14:22:29">2025-08-21</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/9.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AimRT官方示例解析"/></a><div class="content"><a class="title" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析">AimRT官方示例解析</a><time datetime="2025-05-17T16:00:00.000Z" title="发表于 2025-05-18 00:00:00">2025-05-18</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/01/04/%E6%9D%82%E9%A1%B9/sphinx%20%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/20.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="sphinx 使用指南"/></a><div class="content"><a class="title" href="/2025/01/04/%E6%9D%82%E9%A1%B9/sphinx%20%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南">sphinx 使用指南</a><time datetime="2025-01-03T16:00:00.000Z" title="发表于 2025-01-04 00:00:00">2025-01-04</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/19.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++协程入门"/></a><div class="content"><a class="title" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门">C++协程入门</a><time datetime="2024-11-19T16:00:00.000Z" title="发表于 2024-11-20 00:00:00">2024-11-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/8.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="深入浅出访存优化"/></a><div class="content"><a class="title" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化">深入浅出访存优化</a><time datetime="2024-11-09T16:00:00.000Z" title="发表于 2024-11-10 00:00:00">2024-11-10</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url(./img/文章封面/8.jpg);"><div id="footer-wrap"><div class="copyright">&copy;2023 - 2025 By Ming</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat-btn" type="button" title="聊天" style="display:none"><i class="fas fa-message"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
-  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
-  const option = null
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/image-20241120220914072.png" alt="image-20241120220914072"></p>
+<h3 id="为什么写入比读取慢？"><a href="#为什么写入比读取慢？" class="headerlink" title="为什么写入比读取慢？"></a>为什么写入比读取慢？</h3></article><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/11/09/CPP/%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B/TBB%E5%BC%80%E5%90%AF%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%97%85/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">TBB开启并行编程之旅</div></div></a></div><div class="next-post pull-right"><a href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">C++协程入门</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/" title="现代CMake模块化项目指南"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/6.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2024-11-03</div><div class="title">现代CMake模块化项目指南</div></div></a></div><div><a href="/2024/10/21/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%B8%80%E3%80%81%E5%89%8D%E8%A8%80/" title="全面理解STL-前言"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/5.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2024-10-21</div><div class="title">全面理解STL-前言</div></div></a></div><div><a href="/2024/10/17/CPP/CMake/%E7%8E%B0%E4%BB%A3CMake/" title="现代CMake"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/6.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2024-10-17</div><div class="title">现代CMake</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="anzhiyufont anzhiyu-icon-comments"></i><span> 评论</span></div><div class="comment-randomInfo"><a onclick="anzhiyu.addRandomCommentInfo()" href="javascript:void(0)">匿名评论</a><a href="/privacy" style="margin-left: 4px">隐私政策</a></div><div class="comment-tips" id="comment-tips"><span>✅ 你无需删除空行，直接评论以获取最佳展示效果</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div><div class="comment-barrage"></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description">一个记录、分享自己学习过程的博客</div><div class="author-info__bottom-group"><a class="author-info__bottom-group-left" href="/"><h1 class="author-info__name">Ming</h1><div class="author-info__desc">MINGの部落格</div></a><div class="card-info-social-icons is-center"><a class="social-icon faa-parent animated-hover" href="https://github.com/MING-Z0/" target="_blank" title="Github"><i class="anzhiyufont anzhiyu-icon-github"></i></a><a class="social-icon faa-parent animated-hover" href="https://space.bilibili.com/484647453" target="_blank" title="BiliBili"><i class="anzhiyufont anzhiyu-icon-bilibili"></i></a></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC0%E7%AB%A0%EF%BC%9A%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">第0章：前言</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%86%E4%BC%9A%E7%94%A8%E5%88%B0%E7%9A%84%E5%B7%A5%E5%85%B7%E4%BB%A3%E7%A0%81%EF%BC%9A"><span class="toc-number">1.1.</span> <span class="toc-text">将会用到的工具代码：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B%EF%BC%9A"><span class="toc-number">1.2.</span> <span class="toc-text">案例：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC1%E7%AB%A0%EF%BC%9A%E5%86%85%E5%AD%98%E5%B8%A6%E5%AE%BD"><span class="toc-number">2.</span> <span class="toc-text">第1章：内存带宽</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#cpu-bound-%E4%B8%8E-memory-bound"><span class="toc-number">2.1.</span> <span class="toc-text">cpu-bound 与 memory-bound</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%AE%E7%82%B9%E5%8A%A0%E6%B3%95%E7%9A%84%E8%AE%A1%E7%AE%97%E9%87%8F"><span class="toc-number">2.2.</span> <span class="toc-text">浮点加法的计算量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E6%93%8D%E4%BD%9C%E6%89%80%E8%8A%B1%E8%B4%B9%E7%9A%84%E6%97%B6%E9%97%B4"><span class="toc-number">2.3.</span> <span class="toc-text">常见操作所花费的时间</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%9A%E5%B0%91%E8%AE%A1%E7%AE%97%E9%87%8F%E6%89%8D%E7%AE%97%E5%A4%9A%EF%BC%9F"><span class="toc-number">2.4.</span> <span class="toc-text">多少计算量才算多？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A0%E9%80%9F%E6%9B%B2%E7%BA%BF"><span class="toc-number">2.5.</span> <span class="toc-text">加速曲线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E4%BF%A1%E6%81%AF%E6%9F%A5%E7%9C%8B%E5%B7%A5%E5%85%B7%EF%BC%9Admidecode"><span class="toc-number">2.6.</span> <span class="toc-text">内存信息查看工具：dmidecode</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%AA%8C%E8%AF%81-parallel-add-%E6%98%AF%E5%90%A6%E5%85%85%E5%88%86%E5%88%A9%E7%94%A8%E4%BA%86%E5%B8%A6%E5%AE%BD"><span class="toc-number">2.7.</span> <span class="toc-text">验证 parallel_add 是否充分利用了带宽</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E7%AB%A0%EF%BC%9A%E7%BC%93%E5%AD%98%E4%B8%8E%E5%B1%80%E5%9F%9F%E6%80%A7"><span class="toc-number">3.</span> <span class="toc-text">第二章：缓存与局域性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8D%E5%90%8C%E6%95%B0%E6%8D%AE%E9%87%8F%E5%AF%B9%E5%B8%A6%E5%AE%BD%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="toc-number">3.1.</span> <span class="toc-text">不同数据量对带宽的影响</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CPU%E5%86%85%E9%83%A8%E7%9A%84%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98"><span class="toc-number">3.2.</span> <span class="toc-text">CPU内部的高速缓存</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CPU-%E7%BC%93%E5%AD%98%E7%9A%84%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="toc-number">3.3.</span> <span class="toc-text">CPU 缓存的工作原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E7%9A%84%E5%88%86%E7%BA%A7%E7%BB%93%E6%9E%84"><span class="toc-number">3.4.</span> <span class="toc-text">缓存的分级结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98%E5%A4%A7%E5%B0%8F%EF%BC%9Alscpu"><span class="toc-number">3.5.</span> <span class="toc-text">查看高速缓存大小：lscpu</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%9A%E8%BF%87%E5%9B%BE%E5%BD%A2%E7%95%8C%E9%9D%A2%E6%9F%A5%E7%9C%8B%E6%8B%93%E6%89%91%E7%BB%93%E6%9E%84%EF%BC%9Alstopo"><span class="toc-number">3.6.</span> <span class="toc-text">通过图形界面查看拓扑结构：lstopo</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%88%86%E6%9E%90%E5%B8%A6%E5%AE%BD%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="toc-number">3.7.</span> <span class="toc-text">如何分析带宽测试结果</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%9C%BA%E5%88%B6%EF%BC%9A%E8%AF%BB%E5%8F%96%E6%93%8D%E4%BD%9C"><span class="toc-number">3.8.</span> <span class="toc-text">缓存的工作机制：读取操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%9C%BA%E5%88%B6%EF%BC%9A%E5%86%99%E6%93%8D%E4%BD%9C"><span class="toc-number">3.9.</span> <span class="toc-text">缓存的工作机制：写操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9E%E7%BB%AD%E8%AE%BF%E9%97%AE%E4%B8%8E%E8%B7%A8%E6%AD%A5%E8%AE%BF%E9%97%AE"><span class="toc-number">3.10.</span> <span class="toc-text">连续访问与跨步访问</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E8%A1%8C%E5%86%B3%E5%AE%9A%E6%95%B0%E6%8D%AE%E7%9A%84%E7%B2%92%E5%BA%A6"><span class="toc-number">3.11.</span> <span class="toc-text">缓存行决定数据的粒度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%93%E6%9E%84%E4%BD%93%E5%B8%83%E5%B1%80%E5%88%86%E6%9E%90"><span class="toc-number">3.12.</span> <span class="toc-text">结构体布局分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#AOS-%E4%B8%8E-SOA-%E7%9A%84%E5%86%85%E5%AD%98%E5%B8%83%E5%B1%80%E5%B7%AE%E5%BC%82"><span class="toc-number">3.13.</span> <span class="toc-text">AOS 与 SOA 的内存布局差异</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#AOS-%E5%92%8C-SOA-%E7%9A%84%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94"><span class="toc-number">3.14.</span> <span class="toc-text">AOS 和 SOA 的性能对比</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#AOSOA%EF%BC%9A%E7%BB%93%E5%90%88-AOS-%E4%B8%8E-SOA-%E4%BC%98%E5%8A%BF"><span class="toc-number">3.15.</span> <span class="toc-text">AOSOA：结合 AOS 与 SOA 优势</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B3%A8%E6%84%8F%EF%BC%8C%E5%86%85%E9%83%A8SOA%E7%9A%84%E5%B0%BA%E5%AF%B8%E4%B8%8D%E5%AE%9C%E5%A4%AA%E5%B0%8F"><span class="toc-number">3.15.1.</span> <span class="toc-text">注意，内部SOA的尺寸不宜太小</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A6%82%E6%9E%9C%E6%AF%8F%E4%B8%AA%E5%B1%9E%E6%80%A7%E9%83%BD%E8%A6%81%E8%AE%BF%E9%97%AE%E5%88%B0%EF%BC%8C%E9%82%A3%E8%BF%98%E6%98%AFAOS%E6%AF%94%E8%BE%83%E5%A5%BD%EF%BC%88AOSOA%E4%B9%9F%E4%B8%8D%E8%B5%96%EF%BC%89"><span class="toc-number">3.15.2.</span> <span class="toc-text">如果每个属性都要访问到，那还是AOS比较好（AOSOA也不赖）</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%93%E8%AE%BA%EF%BC%9AAOS%E3%80%81SOA%E3%80%81AOSOA-%E5%93%AA%E5%AE%B6%E5%BC%BA"><span class="toc-number">3.16.</span> <span class="toc-text">结论：AOS、SOA、AOSOA 哪家强</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E7%AB%A0%EF%BC%9A%E9%A2%84%E5%8F%96%E4%B8%8E%E7%9B%B4%E5%86%99"><span class="toc-number">4.</span> <span class="toc-text">第三章：预取与直写</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%BA%E5%BA%8F%E8%AE%BF%E9%97%AE%E4%B8%8E%E9%9A%8F%E6%9C%BA%E8%AE%BF%E9%97%AE"><span class="toc-number">4.1.</span> <span class="toc-text">顺序访问与随机访问</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%EF%BC%9A%E6%8C%8964%E5%AD%97%E8%8A%82%E5%88%86%E5%9D%97%E5%9C%B0%E9%9A%8F%E6%9C%BA%E8%AE%BF%E9%97%AE"><span class="toc-number">4.2.</span> <span class="toc-text">解决：按64字节分块地随机访问</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E8%A1%8C%E9%A2%84%E5%8F%96%E6%8A%80%E6%9C%AF%EF%BC%9A%E5%90%83%E7%9D%80%E4%B8%80%E7%A2%97%E9%A5%AD%E7%9A%84%E5%90%8C%E6%97%B6%EF%BC%8C%E5%85%88%E5%96%8A%E5%A6%88%E5%A6%88%E7%83%A7%E4%B8%8B%E4%B8%80%E7%A2%97%E9%A5%AD"><span class="toc-number">4.3.</span> <span class="toc-text">缓存行预取技术：吃着一碗饭的同时，先喊妈妈烧下一碗饭</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%EF%BC%9A%E6%8C%89%E6%9B%B4%E5%A4%A7%E7%9A%84%E5%88%86%E5%9D%97%EF%BC%884096%E5%AD%97%E8%8A%82%EF%BC%89%E9%9A%8F%E6%9C%BA%E8%AE%BF%E9%97%AE"><span class="toc-number">4.4.</span> <span class="toc-text">解决：按更大的分块（4096字节）随机访问</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%B5%E5%AF%B9%E9%BD%90%E7%9A%84%E9%87%8D%E8%A6%81%E6%80%A7"><span class="toc-number">4.5.</span> <span class="toc-text">页对齐的重要性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E9%A2%84%E5%8F%96%EF%BC%9A-mm-prefetch"><span class="toc-number">4.6.</span> <span class="toc-text">手动预取：_mm_prefetch</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E6%96%B0%E7%90%86%E8%A7%A3-mem-bound%EF%BC%9A%E5%BB%B6%E8%BF%9F%E9%9A%90%E8%97%8F"><span class="toc-number">4.7.</span> <span class="toc-text">重新理解 mem-bound：延迟隐藏</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%86%99%E5%85%A5%E6%AF%94%E8%AF%BB%E5%8F%96%E6%85%A2%EF%BC%9F"><span class="toc-number">4.8.</span> <span class="toc-text">为什么写入比读取慢？</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/6.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AimRT官方示例解析"/></a><div class="content"><a class="title" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析">AimRT官方示例解析</a><time datetime="2025-05-17T16:00:00.000Z" title="发表于 2025-05-18 00:00:00">2025-05-18</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/01/04/%E9%9A%8F%E8%AE%B0/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/5.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="sphinx 使用指南"/></a><div class="content"><a class="title" href="/2025/01/04/%E9%9A%8F%E8%AE%B0/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南">sphinx 使用指南</a><time datetime="2025-01-03T16:00:00.000Z" title="发表于 2025-01-04 00:00:00">2025-01-04</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++协程入门"/></a><div class="content"><a class="title" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门">C++协程入门</a><time datetime="2024-11-19T16:00:00.000Z" title="发表于 2024-11-20 00:00:00">2024-11-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/4.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="深入浅出访存优化"/></a><div class="content"><a class="title" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化">深入浅出访存优化</a><time datetime="2024-11-09T16:00:00.000Z" title="发表于 2024-11-10 00:00:00">2024-11-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/09/CPP/%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B/TBB%E5%BC%80%E5%90%AF%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%97%85/" title="TBB开启并行编程之旅"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TBB开启并行编程之旅"/></a><div class="content"><a class="title" href="/2024/11/09/CPP/%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B/TBB%E5%BC%80%E5%90%AF%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%97%85/" title="TBB开启并行编程之旅">TBB开启并行编程之旅</a><time datetime="2024-11-08T16:00:00.000Z" title="发表于 2024-11-09 00:00:00">2024-11-09</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div id="footer_deal"><a class="deal_link" href="/ming-zhanglu@outlook.com" title="email"><i class="anzhiyufont anzhiyu-icon-envelope"></i></a><img class="footer_mini_logo" title="返回顶部" alt="返回顶部" onclick="anzhiyu.scrollToDest(0, 500)" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/配置/头像.jpg" size="50px"/><a class="deal_link" target="_blank" rel="noopener" href="https://github.com/ming-z0" title="Github"><i class="anzhiyufont anzhiyu-icon-github"></i></a><a class="deal_link" target="_blank" rel="noopener" href="https://space.bilibili.com/484647453" title="Bilibili"><i class="anzhiyufont anzhiyu-icon-bilibili"></i></a></div><div id="workboard"><img class="workSituationImg boardsign" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@2.0.4/img/badge/安知鱼-上班摸鱼中.svg" alt="距离月入25k也就还差一个大佬带我~" title="距离月入25k也就还差一个大佬带我~"/><div id="runtimeTextTip"></div></div><p id="ghbdages"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" data-title="博客框架为Hexo_v5.4.0" title="博客框架为Hexo_v5.4.0"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@2.1.5/img/badge/Frame-Hexo.svg" alt="博客框架为Hexo_v5.4.0"/></a><a class="github-badge" target="_blank" href="https://blog.anheyu.com/" style="margin-inline:5px" data-title="本站使用AnZhiYu主题" title="本站使用AnZhiYu主题"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.9/img/Theme-AnZhiYu-2E67D3.svg" alt="本站使用AnZhiYu主题"/></a><a class="github-badge" target="_blank" href="https://github.com/" style="margin-inline:5px" data-title="本站项目由Github托管" title="本站项目由Github托管"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@2.1.5/img/badge/Source-Github.svg" alt="本站项目由Github托管"/></a></p></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2023 - 2025 By <a class="footer-bar-link" href="/" title="Ming" target="_blank">Ming</a></div></div><div id="footer-type-tips"></div><div class="js-pjax"><script>function subtitleType () {
+  getScript('https://sdk.jinrishici.com/v2/browser/jinrishici.js').then(() => {
+    jinrishici.load(result =>{
+      if (true) {
+        const sub = ["生活明朗&#44; 万物可爱&#44; 人间值得&#44; 未来可期."]
+        const content = result.data.content
+        sub.unshift(content)
+        window.typed = new Typed('#footer-type-tips', {
+          strings: sub,
+          startDelay: 300,
+          typeSpeed: 150,
+          loop: true,
+          backSpeed: 50,
+        })
+      } else {
+        document.getElementById('footer-type-tips').innerHTML = result.data.content
+      }
+    })
+  })
+}
+
+if (true) {
+  if (typeof Typed === 'function') {
+    subtitleType()
+  } else {
+    getScript('https://cdn.cbd.int/typed.js@2.1.0/dist/typed.umd.js').then(subtitleType)
+  }
+} else {
+  subtitleType()
+}
+</script></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">27</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">7</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://ming-blog.top/" title="MINGの部落格"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/配置/头像.jpg" alt="MINGの部落格"/><span class="back-menu-item-text">MINGの部落格</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://github.com/MING-Z0/" title="GitHub"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="GitHub"/><span class="back-menu-item-text">GitHub</span></a></div></div></div><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/archives/"><span> 隧道</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/categories/"><span> 分类</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/tags/"><span> 标签</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/link/"><span> 友人帐</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/about/"><span> 关于本人</span></a></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/AimRT/" style="font-size: 0.88rem;">AimRT<sup>1</sup></a><a href="/tags/CMake/" style="font-size: 0.88rem;">CMake<sup>2</sup></a><a href="/tags/CPP/" style="font-size: 0.88rem;">CPP<sup>21</sup></a><a href="/tags/CUDA/" style="font-size: 0.88rem;">CUDA<sup>10</sup></a><a href="/tags/STL/" style="font-size: 0.88rem;">STL<sup>5</sup></a><a href="/tags/%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97/" style="font-size: 0.88rem;">并行计算<sup>12</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/" style="font-size: 0.88rem;">开发环境<sup>1</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E8%AF%AD%E8%A8%80/" style="font-size: 0.88rem;">开发语言<sup>5</sup></a><a href="/tags/%E6%9C%BA%E5%99%A8%E4%BA%BA/" style="font-size: 0.88rem;">机器人<sup>1</sup></a><a href="/tags/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" style="font-size: 0.88rem;">访存优化<sup>1</sup></a><a href="/tags/%E9%9A%8F%E8%AE%B0/" style="font-size: 0.88rem;">随记<sup>5</sup></a><a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 0.88rem;">面试<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="anzhiyufont anzhiyu-icon-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="12875524711" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random" volume="0.5"></meting-js></div><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="anzhiyufont anzhiyu-icon-xmark"></i></button></nav><div class="is-center" id="loading-database"><i class="anzhiyufont anzhiyu-icon-spinner anzhiyu-pulse-icon"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div></div></div><div id="search-mask"></div></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://music.163.com/#/my/m/music/playlist?id=12875524711&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/medium-zoom@1.1.0/dist/medium-zoom.min.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.5/dist/lazyload.iife.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.cbd.int/pangu@4.0.7/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (false){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script async src="/anzhiyu/random.js"></script><script async="async">(function () {
+  var grt = new Date("04/01/2021 00:00:00"); //设置网站上线时间
+  var now = new Date();
+  var dnum;
+  var hnum;
+  var mnum;
+  var snum;
+  var nowHour;
+
+  // 计算并更新天数、小时数、分钟数和秒数
+  function updateTime() {
+    now = new Date(); // 更新 now 的值
+    nowHour = now.getHours(); // 更新 nowHour 的值
+    var days = (now - grt) / 1000 / 60 / 60 / 24;
+    dnum = Math.floor(days);
+    var hours = (now - grt) / 1000 / 60 / 60 - 24 * dnum;
+    hnum = Math.floor(hours);
+    if (String(hnum).length == 1) {
+      hnum = "0" + hnum;
+    }
+    var minutes = (now - grt) / 1000 / 60 - 24 * 60 * dnum - 60 * hnum;
+    mnum = Math.floor(minutes);
+    if (String(mnum).length == 1) {
+      mnum = "0" + mnum;
+    }
+    var seconds = (now - grt) / 1000 - 24 * 60 * 60 * dnum - 60 * 60 * hnum - 60 * mnum;
+    snum = Math.round(seconds);
+    if (String(snum).length == 1) {
+      snum = "0" + snum;
+    }
+  }
+
+  // 更新网页中显示的网站运行时间
+  function updateHtml() {
+    const footer = document.getElementById("footer");
+    if (!footer) return
+    let currentTimeHtml = "";
+    if (nowHour < 18 && nowHour >= 9) {
+      // 如果是上班时间，默认就是"安知鱼-上班摸鱼中.svg"图片，不需要更改
+      currentTimeHtml = `本站居然运行了 ${dnum} 天<span id='runtime'> ${hnum} 小时 ${mnum} 分 ${snum} 秒 </span><i class='anzhiyufont anzhiyu-icon-heartbeat' style='color:red'></i>`;
+    } else {
+      // 如果是下班时间，插入"安知鱼-下班啦.svg"图片
+      let img = document.querySelector("#workboard .workSituationImg");
+      if (img != null) {
+        img.src = "https://npm.elemecdn.com/anzhiyu-blog@2.0.4/img/badge/安知鱼-下班啦.svg";
+        img.title = "下班了就该开开心心的玩耍，嘿嘿~";
+        img.alt = "下班了就该开开心心的玩耍，嘿嘿~";
+      }
+
+      currentTimeHtml = `本站居然运行了 ${dnum} 天<span id='runtime'> ${hnum} 小时 ${mnum} 分 ${snum} 秒 </span><i class='anzhiyufont anzhiyu-icon-heartbeat' style='color:red'></i>`;
+    }
+
+    if (document.getElementById("runtimeTextTip")) {
+      document.getElementById("runtimeTextTip").innerHTML = currentTimeHtml;
+    }
+  }
+
+  setInterval(() => {
+    updateTime();
+    updateHtml();
+  }, 1000);
+})();</script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      tags: 'ams'
+    },
+    chtml: {
+      scale: 1.1
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, '']
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.cbd.int/mathjax@3.2.2/es5/tex-mml-chtml.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typesetPromise()
+}</script><script>(() => {
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
+      region: '',
+      onCommentLoaded: () => {
+        anzhiyu.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') setTimeout(runFn,0)
+    else getScript('https://cdn.cbd.int/twikoo@1.6.39/dist/twikoo.all.min.js').then(runFn)
+  }
 
   const getCount = () => {
     const countELement = document.getElementById('twikoo-count')
@@ -561,187 +740,168 @@
     })
   }
 
-  const init = (el = document, path = location.pathname) => {
-    twikoo.init({
-      el: el.querySelector('#twikoo-wrap'),
-      envId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
-      region: '',
-      onCommentLoaded: () => {
-        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
-      },
-      ...option,
-      path: isShuoshuo ? path : (option && option.path) || path
-    })
-
+  const runFn = () => {
+    init();
     
-
-    isShuoshuo && (window.shuoshuoComment.destroyTwikoo = () => {
-      if (el.children.length) {
-        el.innerHTML = ''
-        el.classList.add('no-comment')
-      }
-    })
-  }
-
-  const loadTwikoo = (el, path) => {
-    if (typeof twikoo === 'object') setTimeout(() => init(el, path), 0)
-    else btf.getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(() => init(el, path))
-  }
-
-  if (isShuoshuo) {
-    'Twikoo' === 'Twikoo'
-      ? window.shuoshuoComment = { loadComment: loadTwikoo }
-      : window.loadOtherComment = loadTwikoo
-    return
   }
 
   if ('Twikoo' === 'Twikoo' || !false) {
-    if (false) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
-    else loadTwikoo()
+    if (false) anzhiyu.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else {
+      loadTwikoo()
+    }
   } else {
     window.loadOtherComment = loadTwikoo
   }
-})()</script><script>(() => {
-  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+})()</script><input type="hidden" name="page-type" id="page-type" value="post"></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
 
-  const loadLivere = (el, path) => {
-    window.livereOptions = {
-      refer: path || location.pathname
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[图片]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[链接]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[代码]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "无法获取评论，请确认相关配置是否正确"
+      })
     }
 
-    if (isShuoshuo) {
-      window.shuoshuoComment.destroyLivere = () => {
-        if (el.children.length) {
-          el.innerHTML = ''
-          el.classList.add('no-comment')
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.cbd.int/twikoo@1.6.39/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'data-lazy-src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'><div class='name'><span>${array[i].nick} </span></div></a>`
         }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <time datetime="${array[i].date}">${anzhiyu.diffDate(array[i].date, true)}</time></div>
+        </div>`
       }
+    } else {
+      result += '没有评论'
     }
 
-    if (typeof LivereTower === 'object') window.LivereTower.init()
-    else {
-      (function(d, s) {
-          var j, e = d.getElementsByTagName(s)[0];
-          if (typeof LivereTower === 'function') { return; }
-          j = d.createElement(s);
-          j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
-          j.async = true;
-          e.parentNode.insertBefore(j, e);
-      })(document, 'script');
-    }
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom && ($dom.innerHTML= result)
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
   }
 
-  if (isShuoshuo) {
-    'Twikoo' === 'Livere'
-      ? window.shuoshuoComment = { loadComment: loadLivere }
-      : window.loadOtherComment = loadLivere
-    return
-  }
-
-  if ('Twikoo' === 'Livere' || !false) {
-    if (false) btf.loadComment(document.getElementById('lv-container'), loadLivere)
-    else loadLivere()
-  } else {
-    window.loadOtherComment = loadLivere
-  }
-})()</script></div><div class="aplayer no-destroy" data-id="12875524711" data-server="netease" data-type="playlist" data-fixed="true" data-mini="true" data-volume="0.4" data-order="random" data-autoplay="true"> </div><script id="canvas_nest" defer="defer" color="97,255,145" opacity="0.7" zIndex="-1" count="88" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-nest.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = false;
-POWERMODE.shake = false;
-POWERMODE.mobile = false;
-document.body.addEventListener('input', POWERMODE);
-</script><script>(() => {
-  window.$crisp = ['safe', true]
-  window.CRISP_WEBSITE_ID = "b178ba69-5256-414b-adab-10306c2edf59"
-
-  btf.getScript('https://client.crisp.chat/l.js').then(() => {
-    const isChatBtn = true
-    const isChatHideShow = true
-
-    if (isChatBtn) {
-      const open = () => {
-        $crisp.push(["do", "chat:show"])
-        $crisp.push(["do", "chat:open"])
-      }
-
-      const close = () => $crisp.push(["do", "chat:hide"])
-
-      close()
-
-      $crisp.push(["on", "chat:closed", close])
-
-      window.chatBtnFn = () => $crisp.is("chat:visible") ? close() : open()
-
-      document.getElementById('chat-btn').style.display = 'block'
-    } else if (isChatHideShow) {
-      window.chatBtn = {
-        hide: () => $crisp.push(["do", "chat:hide"]),
-        show: () => $crisp.push(["do", "chat:show"])
-      }
-    }
-  })
-})()</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script>(() => {
-  const destroyAplayer = () => {
-    if (window.aplayers) {
-      for (let i = 0; i < window.aplayers.length; i++) {
-        if (!window.aplayers[i].options.fixed) {
-          window.aplayers[i].destroy()
-        }
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
       }
     }
   }
 
-  const runMetingJS = () => {
-    typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
-  }
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><script>var visitorMail = "visitor@ming.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><script src="/js/anzhiyu/right_click_menu.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["meta[property=\"og:image\"]","meta[property=\"og:title\"]","meta[property=\"og:url\"]","meta[property=\"og:type\"]","meta[property=\"og:site_name\"]","meta[property=\"og:description\"]","head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"]):not([href="/music/"]):not([href="/no-pjax/"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
 
-  btf.addGlobalFn('pjaxSend', destroyAplayer, 'destroyAplayer')
-  btf.addGlobalFn('pjaxComplete', loadMeting, 'runMetingJS')
-})()</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>(() => {
-  const pjaxSelectors = ["meta[property=\"og:image\"]","meta[property=\"og:title\"]","meta[property=\"og:url\"]","meta[property=\"og:description\"]","link[rel=\"canonical\"]","head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
 
-  window.pjax = new Pjax({
-    elements: 'a:not([target="_blank"])',
-    selectors: pjaxSelectors,
-    cacheBust: false,
-    analytics: false,
-    scrollRestoration: false
-  })
-
-  const triggerPjaxFn = (val) => {
-    if (!val) return
-    Object.values(val).forEach(fn => fn())
-  }
-
-  document.addEventListener('pjax:send', () => {
-    // removeEventListener
-    btf.removeGlobalFnEvent('pjaxSendOnce')
-    btf.removeGlobalFnEvent('themeChange')
-
-    // reset readmode
-    const $bodyClassList = document.body.classList
-    if ($bodyClassList.contains('read-mode')) $bodyClassList.remove('read-mode')
-
-    triggerPjaxFn(window.globalFn.pjaxSend)
-  })
-
-  document.addEventListener('pjax:complete', () => {
-    btf.removeGlobalFnEvent('pjaxCompleteOnce')
-    document.querySelectorAll('script[data-pjax]').forEach(item => {
-      const newScript = document.createElement('script')
-      const content = item.text || item.textContent || item.innerHTML || ""
-      Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
-      newScript.appendChild(document.createTextNode(content))
-      item.parentNode.replaceChild(newScript, item)
-    })
-
-    triggerPjaxFn(window.globalFn.pjaxComplete)
-  })
-
-  document.addEventListener('pjax:error', e => {
-    if (e.request.status === 404) {
-      const usePjax = true
-      false 
-        ? (usePjax ? pjax.loadUrl('/404.html') : window.location.href = '/404.html')
-        : window.location.href = e.request.responseURL
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
     }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
   })
-})()</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>

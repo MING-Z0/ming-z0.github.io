@@ -1,190 +1,213 @@
-<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>现代CMake模块化项目指南 | MINGの部落格</title><meta name="author" content="Ming"><meta name="copyright" content="Ming"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta name="description" content="一、文件、目录组织规范1. 推荐的目录组织方式目录组织格式：  项目名&#x2F;include&#x2F;项目名&#x2F;模块名.h  项目名&#x2F;include&#x2F;项目名&#x2F;模块名.h  项目名&#x2F;src&#x2F;模块名.cpp   CMakeLists.txt内容： 1target_include_directories(项目名 PUBLIC include">
-<meta property="og:type" content="article">
-<meta property="og:title" content="现代CMake模块化项目指南">
-<meta property="og:url" content="https://ming-z0.github.io/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/index.html">
-<meta property="og:site_name" content="MINGの部落格">
-<meta property="og:description" content="一、文件、目录组织规范1. 推荐的目录组织方式目录组织格式：  项目名&#x2F;include&#x2F;项目名&#x2F;模块名.h  项目名&#x2F;include&#x2F;项目名&#x2F;模块名.h  项目名&#x2F;src&#x2F;模块名.cpp   CMakeLists.txt内容： 1target_include_directories(项目名 PUBLIC include">
-<meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/13.jpg">
-<meta property="article:published_time" content="2024-11-02T16:00:00.000Z">
-<meta property="article:modified_time" content="2025-01-13T13:58:34.765Z">
-<meta property="article:author" content="Ming">
-<meta property="article:tag" content="CMake">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/13.jpg"><script type="application/ld+json">{
-  "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  "headline": "现代CMake模块化项目指南",
-  "url": "https://ming-z0.github.io/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/",
-  "image": "https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/13.jpg",
-  "datePublished": "2024-11-02T16:00:00.000Z",
-  "dateModified": "2025-01-13T13:58:34.765Z",
-  "author": [
-    {
-      "@type": "Person",
-      "name": "Ming",
-      "url": "https://ming-z0.github.io"
-    }
-  ]
-}</script><link rel="shortcut icon" href="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg"><link rel="canonical" href="https://ming-z0.github.io/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
-    (() => {
-      
-    const saveToLocal = {
-      set: (key, value, ttl) => {
-        if (!ttl) return
-        const expiry = Date.now() + ttl * 86400000
-        localStorage.setItem(key, JSON.stringify({ value, expiry }))
-      },
-      get: key => {
-        const itemStr = localStorage.getItem(key)
-        if (!itemStr) return undefined
-        const { value, expiry } = JSON.parse(itemStr)
-        if (Date.now() > expiry) {
-          localStorage.removeItem(key)
-          return undefined
-        }
-        return value
-      }
-    }
-
-    window.btf = {
-      saveToLocal,
-      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
-        const script = document.createElement('script')
-        script.src = url
-        script.async = true
-        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
-        script.onload = script.onreadystatechange = () => {
-          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
-        }
-        script.onerror = reject
-        document.head.appendChild(script)
-      }),
-      getCSS: (url, id) => new Promise((resolve, reject) => {
-        const link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = url
-        if (id) link.id = id
-        link.onload = link.onreadystatechange = () => {
-          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
-        }
-        link.onerror = reject
-        document.head.appendChild(link)
-      }),
-      addGlobalFn: (key, fn, name = false, parent = window) => {
-        if (!true && key.startsWith('pjax')) return
-        const globalFn = parent.globalFn || {}
-        globalFn[key] = globalFn[key] || {}
-        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
-        parent.globalFn = globalFn
-      }
-    }
-  
-      
-      const activateDarkMode = () => {
-        document.documentElement.setAttribute('data-theme', 'dark')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
-        }
-      }
-      const activateLightMode = () => {
-        document.documentElement.setAttribute('data-theme', 'light')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
-        }
-      }
-
-      btf.activateDarkMode = activateDarkMode
-      btf.activateLightMode = activateLightMode
-
-      const theme = saveToLocal.get('theme')
-    
-          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
-        
-      
-      const asideStatus = saveToLocal.get('aside-status')
-      if (asideStatus !== undefined) {
-        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
-      }
-    
-      
-    const detectApple = () => {
-      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
-        document.documentElement.classList.add('apple')
-      }
-    }
-    detectApple()
-  
-    })()
-  </script><script>(function(c,l,a,r,i,t,y){
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>现代CMake模块化项目指南 | MINGの部落格</title><meta name="keywords" content="CMake,CPP"><meta name="author" content="Ming"><meta name="copyright" content="Ming"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="现代CMake模块化项目指南"><meta name="application-name" content="现代CMake模块化项目指南"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="现代CMake模块化项目指南"><meta property="og:url" content="https://ming-z0.github.io/2024/11/03/CPP/CMake/现代化CMake模块化项目指南/index.html"><meta property="og:site_name" content="MINGの部落格"><meta property="og:description" content="一、文件、目录组织规范1. 推荐的目录组织方式目录组织格式：  项目名&amp;#x2F;include&amp;#x2F;项目名&amp;#x2F;模块名.h  项目名&amp;#x2F;include&amp;#x2F;项目名&amp;#x2F;模块名.h  项目名&amp;#x2F;src&amp;#x2F;模块名.cpp   CMakeLists.txt"><meta property="og:locale" content="zh-CN"><meta property="og:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/6.jpg"><meta property="article:author" content="Ming"><meta property="article:tag" content=" "><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://ming-z0.github.io/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/6.jpg"><meta name="description" content="一、文件、目录组织规范1. 推荐的目录组织方式目录组织格式：  项目名&amp;#x2F;include&amp;#x2F;项目名&amp;#x2F;模块名.h  项目名&amp;#x2F;include&amp;#x2F;项目名&amp;#x2F;模块名.h  项目名&amp;#x2F;src&amp;#x2F;模块名.cpp   CMakeLists.txt"><link rel="shortcut icon" href="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg"><link rel="canonical" href="https://ming-z0.github.io/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/"><link rel="preconnect" href="//cdn.cbd.int"/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.28/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/swiper/swiper.min.css" media="print" onload="this.media='all'"><script>(function(c,l,a,r,i,t,y){
     c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
     t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
     y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 })(window, document, "clarity", "script", "i5biwbw9sk");</script><script>const GLOBAL_CONFIG = {
+  linkPageTop: {"enable":true,"title":"无限进步","addFriendPlaceholder":"昵称（请勿包含博客等字样）：\n网站地址（要求博客地址，请勿提交个人主页）：\n头像图片url（请提供尽可能清晰的图片，我会上传到我自己的图床）：\n描述：\n站点截图（可选）：\n"},
+  peoplecanvas: undefined,
+  postHeadAiDescription: undefined,
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: {"enable":true,"default":"晚上好👋","list":[{"greeting":"晚安😴","startTime":0,"endTime":5},{"greeting":"早上好鸭👋, 祝你一天好心情！","startTime":6,"endTime":9},{"greeting":"上午好👋, 状态很好，鼓励一下～","startTime":10,"endTime":10},{"greeting":"11点多啦, 在坚持一下就吃饭啦～","startTime":11,"endTime":11},{"greeting":"午安👋, 休息休息吧！","startTime":12,"endTime":14},{"greeting":"🌈充实的一天辛苦啦！","startTime":14,"endTime":18},{"greeting":"19点喽, 奖励一顿丰盛的大餐吧🍔。","startTime":19,"endTime":19},{"greeting":"晚上好👋, 在属于自己的时间好好放松😌~","startTime":20,"endTime":24}]},
+  twikooEnvId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
+  commentBarrageConfig:undefined,
+  music_page_default: "nav_music",
   root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: {"mode":"cdn","api":"https://img2color-go.vercel.app/api?img=","cover_change":true},
+  authorStatus: undefined,
   algolia: undefined,
-  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":-1,"unescape":false,"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
-  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简"},
-  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":200,"highlightFullpage":true,"highlightMacStyle":true},
+  localSearch: {"path":"/search.xml","preload":false,"languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"距离上次更新已经过去了","messageNext":"天，文章的内容可能已经过时。"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
   copy: {
     success: '复制成功',
-    error: '复制失败',
+    error: '复制错误',
     noSupport: '浏览器不支持'
   },
   relativeDate: {
     homepage: false,
+    simplehomepage: true,
     post: false
   },
-  runtime: '',
-  dateSuffix: {
+  runtime: '天',
+  date_suffix: {
     just: '刚刚',
     min: '分钟前',
     hour: '小时前',
     day: '天前',
     month: '个月前'
   },
-  copyright: undefined,
-  lightbox: 'fancybox',
-  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
-  infinitegrid: {
-    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
-    buttonText: '加载更多'
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: Ming","link":"链接: ","source":"来源: MINGの部落格","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'mediumZoom',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
   },
   isPhotoFigcaption: true,
-  islazyloadPlugin: false,
+  islazyload: true,
   isAnchor: false,
-  percent: {
-    toc: true,
-    rightside: true,
-  },
-  autoDarkmode: false
+  shortcutKey: undefined,
+  autoDarkmode: true
 }</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: 'MINGの部落格',
   title: '现代CMake模块化项目指南',
-  isHighlightShrink: false,
+  postAI: '',
+  pageFillDescription: '一、文件、目录组织规范, 1. 推荐的目录组织方式, 划分子项目, 根项目的CMakeLists.txt 配置, 子项目的CMakeLists.txt 配置, 子项目头文件, 子项目源文件, 复习：GLOB和GLOB_RECURUSE的区别, 头文件和源文件的一一对应关系, 只有头文件没有源文件的情况, 每新增一个功能模块需要创建两个文件, 一个模块依赖其他模块则应导入他的头文件, 依赖其他模块但不解引用则 可以只向前声明不导入头文件, 以项目名为命名空间(namespace)避免符号冲突, 依赖另一个子项目则需要链接他, CMake的include流, 二、第三方库、依赖项配置, 1. find_package命令, 2. 找的包到底是什么, 3. 搜索路径, 4. 安装在非标准路径的库, 5. 假如没有Config文件, 6. 现代 vs 古代：Config和Find文件的区别, 7. find_package 的两种模式, 8. 关于vcpkg的坑, 9. find_package 命令指定版本, 其他补充与科普, macro 和 function 的区别, include 和 add_subdirectory 的区别, 亲 Unix 软件从源码安装的通用套路, 语义版本号（semantic versioning）系统, 古代CMake常见问题, 少见的 add_subdirectory 邪教一文件目录组织规范推荐的目录组织方式目录组织格式项目名项目名模块名项目名项目名模块名项目名模块名内容项目名源码文件中写项目名模块名项目名函数名头文件中写项目名函数名实现文件中写项目名模块名项目名函数名函数实现划分子项目大型的项目往往会划分为几个子项目即使你只有一个子项目也建议你先创建一个子目录方便以后追加新的子项目上面的案例中我们在根目录下创建了两个子项目和他们分别在各自的目录下有自己的根项目的配置根目录在根项目的中设置了默认的构建模式设置了统一的版本等各种选项然后通过命令初始化了根项目随后通过把两个子项目和添加进来顺序无关紧要这会调用和子项目的配置子项目的就干净许多只是创建了这个静态库对象并通过为他批量添加了所有位于和下源码和头文件根项目的负责处理全局有效的设定而子项目的则仅考虑该子项目自身的设定比如他的头文件目录要链接的库等等子项目头文件这里我们给设置了头文件搜索路径因为子项目的里指定的路径都是相对路径所以这里指定实际上是根注意我们用了修饰符这是为了让链接的也能够共享根这个头文件搜索路径子项目源文件这里我们给批量添加了下的全部源码文件明明只有需要编译为什么还添加了为了头文件也能被纳入的项目资源浏览器方便编辑因为子项目的里指定的路径都是相对路径所以这里指定实际上是根复习和的区别疑问都是按照通配符批量匹配文件有什么区别特性是否支持嵌套目录匹配否是示例总结不支持匹配嵌套的目录而允许使用匹配嵌套目录疑问加了这个选项有什么区别如果不加在你创建新文件时不会自动更新仍然是旧的文件列表这可能导致出现错误在这种情况下你需要手动运行才能更新而加上后每次运行时会自动检测目录是否有更新如果发现有新文件会自动重新运行从而更新变量总结使用可以确保在构建时自动检测文件变化减少手动更新的需要避免潜在的编译错误头文件和源文件的一一对应关系通常每个头文件都有一个对应的源文件两个文件名字应当相同方便我们理解也方便跳转只有后缀名不一样如果是一个类则文件名应和类名相同方便查找头文件中包含函数和类的声明源文件则包含他们的实现只有头文件没有源文件的情况有时我们会直接把实现直接写在头文件里这时可以没有与之对应的源文件只有一个头文件注意在头文件里直接实现函数时要加或关键字每新增一个功能模块需要创建两个文件每新增一个功能模块同时添加同名的源文件和头文件头文件中的声明和源文件中的实现一一对应新添加功能模块一个模块依赖其他模块则应导入他的头文件如果新模块中用到了其他模块的类或函数则需要在新模块的头文件和源文件中都导入其他模块的头文件注意不论是项目自己的头文件还是外部的系统的头文件请全部统一采用项目名模块名的格式不要用模块名这种相对路径的格式避免模块名和系统已有头文件名冲突头文件项目名模块名源文件项目名模块名依赖其他模块但不解引用则可以只向前声明不导入头文件如果模块的头文件虽然引用了其他模块中的类但是他里面并没有解引用只有源文件解引用了那么这个头文件是不需要导入的只需要一个前置声明只有实际调用了成员函数的源文件需要导入头文件前置声明源文件实际解引用的源文件导入好处加快编译速度防止循环引用以项目名为命名空间避免符号冲突在声明和定义外面都套一层命名空间例如此处我的子项目名是那我就避免暴露全局的这是因为万一有个不拘一格的第三方库也暴露个全局的两个符号就会发生冲突由于类符号都具有属性链接器会随机选择一个覆盖掉非常危险头文件命名空间源文件命名空间关于符号的属性以后再讲讲这里还是重点关注依赖另一个子项目则需要链接他让链接上由于属性具有传染性根现在也加入的头文件搜索路径了因此里可以到的头文件同理如果又有一个那么也有和的所有头文件搜索路径了的流和的一样也有一个命令你写则他会在这个列表中的所有路径下查找这个文件这样你可以在里写一些你常用的函数宏变量等二第三方库依赖项配置命令常用参数列表一览用法举例查找名为的包找不到不报错事后可以通过查询是否找到查找名为的包找不到不报错也不打印任何信息最常见用法查找名为的包找不到就报错并终止进程不再继续往下执行查找名为的包找不到就报错且必须具有和这两个组件如果没有这两个组件也会报错查找名为的包找不到就报错可具有和这两个组件没有这两组件不会报错通过查询是否找到组件找的包到底是什么实际上是在找一个名为的文件注出于历史兼容性考虑除了以外这个文件名也会被识别到同理则是会去找名为的文件这些形如包名的文件我称之为包配置文件是你安装时随等实际的库文件一起装到你的系统中去的以我的系统为例包配置文件位于实际的动态库文件位于因此并不是直接去找具体的动态库文件和头文件例如而是去找包配置文件例如这个配置文件里包含了包的具体信息包括动态库文件的位置头文件的目录链接时需要开启的编译选项等等而且某些库都具有多个子动态库例如就有因此要求所有第三方库作者统一包装成一个文件包含所有相关信息类似于的比你单独的一个个去找动态库文件要灵活的多包配置文件由第三方库的作者的开发团队提供在这个库安装时的安装程序或等会自动放到这个路径其中是包名供用户找到并了解该包的具体信息这个位置是和第三方库作者约定俗成的由第三方库的安装程序负责把包配置文件放到这里如果第三方库的作者比较懒没提供支持由安装程序提供那么得用另外的一套方法稍后细谈搜索路径系统下的搜索路径其中是变量平台默认为是你在命令中指定的包名是系统的架构名类系统下的搜索路径其中是变量平台默认为是你在命令中指定的包名是系统的架构例如或用于伺候喜欢把库文件套娃在目录下举例说明搜索路径例如你是位的系统会依次搜索例如你是位的系统会依次搜索还有一点可以有额外后缀且不分大小写无论还是例如同样都是可以被搜索到的同样都是可以被搜索到的安装在非标准路径的库以为例如果你安装在下列标准路径能够自动找到但是假如我的库不是装在这些标准路径而是我自定义的路径怎么办而且即使你不自定义安装路径版的默认安装就会安装到何况我们同学有的还喜欢装到盘去是非标准路径的重灾区他就没有一个统一的目录然而你一旦把库安装到非标准路径是找不到的这时你需要手动指定一个变量告诉他在哪儿可以是普通变量也可以是环境变量两个中只要设置了任何一个都可以识别到变量一般通过命令行设置举例系统下的例如我把安装到了首先找到他里面的文件所在位置可以用文件管理器的搜索功能假如你找到该文件的位置是那么请你设置变量为有三种设置方法单次有效在阶段可以从命令行设置注意要加引号全局启用右键我的电脑管理高级添加一个环境变量值为然后重启这样以后你每次构建任何项目都能自动找到这个路径的包了单项目有效直接在你自己项目的最开头写一行注意要加引号一定要加在最前面系统下的例如我把安装到了首先找到他里面的文件所在位置可以用文件管理器的搜索功能假如你找到该文件的位置是那么请你设置变量为有三种设置方法单次有效在阶段可以从命令行设置全局启用修改你的文件添加环境变量然后重启终端这样以后你每次构建任何项目都能自动找到这个路径的包了单项目有效直接在你自己项目的最开头写一行一定要加在最前面三种方案的利弊分析单次有效通过命令行最安全高度推荐全局有效添加环境变量可能影响以后其他项目比如你项目依赖你设置了环境变量后来又搞了个项目依赖但是你忘了你设置过全局的环境变量指向了导致版本冲突单项目有效写死在虽然方便了你但是你的拿到别人电脑上例如你通过开源的可能你而人家却需要呢就冲突了所以单次有效虽然劳驾您的高抬贵手每次命令行打一下但人家也打一下就没有冲突各美其美美美与共赋能多元化社会下沉团队合作发力面实际上只要你不删不需要每次都一下具有记忆功能只需要第一次指定好以后第二次运行可以省略只有清理了以后才需要重新指定假如没有文件绝大多数常用库都提供了支持即使他们本身不一定是用构建的这些文件都是由第三方库负责安装到但是也有少数不听话的库官方不提供支持即安装时不自带文件恼人的是这些不听话的库有些竟然是非常热门的库例如为了不影响用户体验发明了文件你不支持我是吧我支持你文件会在安装时负责安装到包搜索文件可以在不知道包具体位置信息的情况下搜索他们在等默认路径搜索这些都是自带的包搜索文件那么如果有个不太热门的第三方库没提供包配置文件也没提供包搜索文件我们该如何找到他这就需要自己提供包搜索文件了别担心你不用自己写上有很多志士仁人已经写过了对应的包搜索文件你搜一下就能找到了举例虽然文件通常风格比较统一都是这种格式但是不同的文件特别是这种网上志士仁人自己编写的文件风格可能千差万别没办法毕竟不是官方的支持嘛很多都还是古代的用法例如关于具体使用的细节可以打开文件查看他里面前半部分是注释会讲解如何使用现在你下载这个文件放到然后在你的里最上面写一行这样你之后的就会用你下载的这个去找包了现代古代和文件的区别不管是类还是类一定要打开相应的文件看看注释才能确定他是古代风格还是现代风格古代的命名规范高度不统一有的是有的又是非常沙雕需要看相应文件的注释才能确定具体是怎么命名的现代就好多了统一用包名组件名的格式但是具体的组件名还是要查看文件中的注释才能确定例如等大多现代的文件都同时兼容现代和古代的用法特别古老的文件则只能用古代的用法例如上图是的注释可以看到章节是在介绍现代的用法而章节是在介绍古代的用法我们尽量用现代的那种就行的两种模式指定使用哪种模式只会寻找搜索路径默认为只会寻找搜索路径默认为或不指定则两者都会尝试先尝试再尝试关于的坑刚刚说了有些懒惰第三方库比如他不提供文件需要我们自己手写或抄别人开源项目里的个文件用起来很不方便但是会为所有第三方库即使是懒惰的都配备一个文件方便你导入所以用时尽量用避免被自带的文件误导找到别的地方而非安装的那个的库另外注意需要的如果你用设置必须在命令前面并且修改这个变量后要删除目录重新一遍才能生效否则会在旧的环境里找找不到装的库命令指定版本关于语义版本号的内容见最后科普内容查找名为的包不限版本事后可以通过查询找到的版本查找版本在以上的包查找版本刚好为的包如果没写全则没写的部分默认为例如下列三者等价其他补充与科普和的区别相当于直接把代码粘贴过去直接访问调用者的作用域这里写的相对路径和是基于调用者所在路径则是会创建一个闭包优先访问定义者的作用域这里写的相对路径和则是基于定义者所在路径和的区别相当于直接把代码粘贴过去直接访问调用者的作用域这里创建的变量和外面共享直接则调用者也有这个变量了中则是基于定义者所在路径优先访问定义者的作用域这里需要才能修改到外面的变量亲软件从源码安装的通用套路构建系统生成这个脚本由生成核心编译生成安装拷贝到构建系统生成核心编译生成安装拷贝到注如果则会拷贝到语义版本号系统软件行业记录版本迭代普遍采用的是一套所谓的语义版本号系统英文简称通常他的格式是三个用点分隔开来的十进制数字例如称为主版本号出现功能重大变更以至于和旧不兼容的时候会增加该号称为次版本号功能有所变更或增加但依然和旧的兼容时会增加该号称为补丁版号功能没有改变只是修复了一些就重新发布时会增加该号也有的软件不拘一格索性用发布的日期作为版本号的三个数字例如不论采用哪种编号方案都是几个用点分开的数字并且数字越大越新且优先比较靠前面的数字因此为了通用支持最多四个点分开的版本号并且如果你写他会自动帮你把多余的默认为也就是说比较版本号时可以用判断大小古代常见问题我明明链接了库编译时却报错找不到头文件怎么办你漏了上面的我明明编译都通过了链接却报错怎么办你漏了上面的打印检查一下这两个变量是不是空的如果为空说明你变量名打错了特色就是找不到变量不报错而是视为空字符串去看一下里的注释那就是文档到底是什么名字少见的邪教大部分第三方库都需要提前安装好然后再找到他然后才能链接也有少数第三方库为了方便还支持作为子项目加到你的项目中来这种就不需要语法标准方法邪教方法需要下载好他们的源码放到你的根目录下',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: true,
   isToc: true,
-  pageType: 'post'
-}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
-  const $loadingBox = document.getElementById('loading-box')
-  const $body = document.body
-  const preloader = {
-    endLoading: () => {
-      $body.style.overflow = ''
-      $loadingBox.classList.add('loaded')
-    },
-    initLoading: () => {
-      $body.style.overflow = 'hidden'
-      $loadingBox.classList.remove('loaded')
-    }
+  postUpdate: '2025-08-27 21:28:23',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
   }
 
-  preloader.initLoading()
-  window.addEventListener('load', preloader.endLoading)
-
-  if (true) {
-    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
-    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
   }
-})()</script><div id="web_bg" style="background-image: url(/img/配置/背景.jpg);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">28</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">15</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">9</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 分析</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E6%A0%87%E7%AD%BE/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/%E5%88%86%E7%B1%BB/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fa fa-archive"></i><span> 档案室</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fa fa-user"></i><span> 我的</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E5%8F%8B%E9%93%BE/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 收藏</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1VB4y137ys/"><i class="fa-fw fas fa-heart"></i><span> ROS2理论与实践</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1if4y147hS/"><i class="fa-fw fas fa-heart"></i><span> 动手学深度学习</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://geek-logic.com/"><i class="fa-fw fas fa-heart"></i><span> Geek Logic</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://github.com/parallel101/cppguidebook"><i class="fa-fw fas fa-heart"></i><span> 小彭老师C++大典</span></a></li><li><a class="site-page child" href="/unpublished/ROS2%E7%90%86%E8%AE%BA%E4%B8%8E%E5%AE%9E%E8%B7%B5%E2%80%94%E2%80%94%E6%A0%B8%E5%BF%83%E7%AF%87/"><i class="fa-fw fas fa-heart"></i><span> ROS2</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/%E5%85%B3%E4%BA%8E/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(./img/文章封面/13.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">MINGの部落格</span></a><a class="nav-page-title" href="/"><span class="site-name">现代CMake模块化项目指南</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 分析</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E6%A0%87%E7%AD%BE/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/%E5%88%86%E7%B1%BB/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fa fa-archive"></i><span> 档案室</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fa fa-user"></i><span> 我的</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/%E5%8F%8B%E9%93%BE/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 收藏</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1VB4y137ys/"><i class="fa-fw fas fa-heart"></i><span> ROS2理论与实践</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1if4y147hS/"><i class="fa-fw fas fa-heart"></i><span> 动手学深度学习</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://geek-logic.com/"><i class="fa-fw fas fa-heart"></i><span> Geek Logic</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://github.com/parallel101/cppguidebook"><i class="fa-fw fas fa-heart"></i><span> 小彭老师C++大典</span></a></li><li><a class="site-page child" href="/unpublished/ROS2%E7%90%86%E8%AE%BA%E4%B8%8E%E5%AE%9E%E8%B7%B5%E2%80%94%E2%80%94%E6%A0%B8%E5%BF%83%E7%AF%87/"><i class="fa-fw fas fa-heart"></i><span> ROS2</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/%E5%85%B3%E4%BA%8E/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">现代CMake模块化项目指南</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-11-02T16:00:00.000Z" title="发表于 2024-11-03 00:00:00">2024-11-03</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-01-13T13:58:34.765Z" title="更新于 2025-01-13 21:58:34">2025-01-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/CMake/">CMake</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">6.9k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>27分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="一、文件、目录组织规范"><a href="#一、文件、目录组织规范" class="headerlink" title="一、文件、目录组织规范"></a>一、文件、目录组织规范</h2><h3 id="1-推荐的目录组织方式"><a href="#1-推荐的目录组织方式" class="headerlink" title="1. 推荐的目录组织方式"></a>1. 推荐的目录组织方式</h3><p>目录组织格式：</p>
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 7.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><div class="back-home-button"><i class="anzhiyufont anzhiyu-icon-grip-vertical"></i><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://ming-blog.top/" title="MINGの部落格"><img class="back-menu-item-icon" src="/img/配置/头像.jpg" alt="MINGの部落格"/><span class="back-menu-item-text">MINGの部落格</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://github.com/MING-Z0/" title="GitHub"><img class="back-menu-item-icon" src="https://image.anheyu.com/favicon.ico" alt="GitHub"/><span class="back-menu-item-text">GitHub</span></a></div></div></div></div><a id="site-name" href="/" accesskey="h"><div class="title">MINGの部落格</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/archives/"><span> 隧道</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/categories/"><span> 分类</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/tags/"><span> 标签</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/link/"><span> 友人帐</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/about/"><span> 关于本人</span></a></div></div></div><div id="nav-right"><div class="nav-button only-home" id="travellings_button" title="随机前往一个开往项目网站"><a class="site-page" onclick="anzhiyu.totraveling()" title="随机前往一个开往项目网站" href="javascript:void(0);" rel="external nofollow" data-pjax-state="external"><i class="anzhiyufont anzhiyu-icon-train"></i></a></div><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><div class="nav-button" id="search-button"><a class="site-page social-icon search" href="javascript:void(0);" title="搜索🔍" accesskey="s"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span> 搜索</span></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="/./img/%E6%89%93%E8%B5%8F/wechat.jpg" target="_blank"><img class="post-qr-code-img" alt="微信" src="/./img/%E6%89%93%E8%B5%8F/wechat.jpg"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/AimRT/" style="font-size: 1.05rem;">AimRT<sup>1</sup></a><a href="/tags/CMake/" style="font-size: 1.05rem;">CMake<sup>2</sup></a><a href="/tags/CPP/" style="font-size: 1.05rem;">CPP<sup>21</sup></a><a href="/tags/CUDA/" style="font-size: 1.05rem;">CUDA<sup>10</sup></a><a href="/tags/STL/" style="font-size: 1.05rem;">STL<sup>5</sup></a><a href="/tags/%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97/" style="font-size: 1.05rem;">并行计算<sup>12</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/" style="font-size: 1.05rem;">开发环境<sup>1</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E8%AF%AD%E8%A8%80/" style="font-size: 1.05rem;">开发语言<sup>5</sup></a><a href="/tags/%E6%9C%BA%E5%99%A8%E4%BA%BA/" style="font-size: 1.05rem;">机器人<sup>1</sup></a><a href="/tags/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" style="font-size: 1.05rem;">访存优化<sup>1</sup></a><a href="/tags/%E9%9A%8F%E8%AE%B0/" style="font-size: 1.05rem;">随记<sup>5</sup></a><a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 1.05rem;">面试<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2025/05/"><span class="card-archive-list-date">五月 2025</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2025/01/"><span class="card-archive-list-date">一月 2025</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2024/11/"><span class="card-archive-list-date">十一月 2024</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">6</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2024/10/"><span class="card-archive-list-date">十月 2024</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">15</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/12/"><span class="card-archive-list-date">十二月 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">4</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="post-meta-categories"><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-inbox post-meta-icon"></i><a class="post-meta-categories" href="/categories/CMake/" itemprop="url">CMake</a><i class="anzhiyufont anzhiyu-icon-angle-right post-meta-separator"></i><i class="anzhiyufont anzhiyu-icon-inbox post-meta-icon"></i><a class="post-meta-categories" href="/categories/CMake/CPP/" itemprop="url">CPP</a></span><span class="article-meta tags"><a class="article-meta__tags" href="/tags/CMake/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>CMake</span></a><a class="article-meta__tags" href="/tags/CPP/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>CPP</span></a></span></div></div><h1 class="post-title" itemprop="name headline">现代CMake模块化项目指南</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2024-11-02T16:00:00.000Z" title="发表于 2024-11-03 00:00:00">2024-11-03</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2025-08-27T13:28:23.409Z" title="更新于 2025-08-27 21:28:23">2025-08-27</time></span></div><div class="meta-secondline"><span class="post-meta-separator"></span><span class="post-meta-wordcount"><i class="anzhiyufont anzhiyu-icon-file-word post-meta-icon" title="文章字数"></i><span class="post-meta-label" title="文章字数">字数总计:</span><span class="word-count" title="文章字数">6.9k</span><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-clock post-meta-icon" title="阅读时长"></i><span class="post-meta-label" title="阅读时长">阅读时长:</span><span>27分钟</span></span><span class="post-meta-separator"></span><span class="post-meta-pv-cv" id="" data-flag-title="现代CMake模块化项目指南"><i class="anzhiyufont anzhiyu-icon-fw-eye post-meta-icon"></i><span class="post-meta-label" title="阅读量">阅读量:</span><span id="busuanzi_value_page_pv"><i class="anzhiyufont anzhiyu-icon-spinner anzhiyu-spin"></i></span></span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/6.jpg"></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://ming-z0.github.io/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/"><header><a class="post-meta-categories" href="/categories/CMake/" itemprop="url">CMake</a><a class="post-meta-categories" href="/categories/CMake/CPP/" itemprop="url">CPP</a><a href="/tags/CMake/" tabindex="-1" itemprop="url">CMake</a><a href="/tags/CPP/" tabindex="-1" itemprop="url">CPP</a><h1 id="CrawlerTitle" itemprop="name headline">现代CMake模块化项目指南</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">Ming</span><time itemprop="dateCreated datePublished" datetime="2024-11-02T16:00:00.000Z" title="发表于 2024-11-03 00:00:00">2024-11-03</time><time itemprop="dateCreated datePublished" datetime="2025-08-27T13:28:23.409Z" title="更新于 2025-08-27 21:28:23">2025-08-27</time></header><h2 id="一、文件、目录组织规范"><a href="#一、文件、目录组织规范" class="headerlink" title="一、文件、目录组织规范"></a>一、文件、目录组织规范</h2><h3 id="1-推荐的目录组织方式"><a href="#1-推荐的目录组织方式" class="headerlink" title="1. 推荐的目录组织方式"></a>1. 推荐的目录组织方式</h3><p>目录组织格式：</p>
 <ul>
 <li><p>项目名&#x2F;include&#x2F;项目名&#x2F;模块名.h</p>
 </li>
@@ -205,9 +228,9 @@
 <p>实现文件（.cpp）中写：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;项目名/模块名.h&gt;</span></span></span><br><span class="line"><span class="keyword">namespace</span> 项目名 &#123;</span><br><span class="line"><span class="type">void</span> 函数名() &#123; 函数实现 &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p><img src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241031195636131.png" alt="image-20241031195636131" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241031195636131.png" alt="image-20241031195636131"></p>
 <ol start="2">
-<li><h3 id="划分子项目"><a href="#划分子项目" class="headerlink" title="划分子项目"></a>划分子项目</h3><p><img src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241031204357023.png" alt="image-20241031204357023" loading='lazy'></p>
+<li><h3 id="划分子项目"><a href="#划分子项目" class="headerlink" title="划分子项目"></a>划分子项目</h3><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241031204357023.png" alt="image-20241031204357023"></p>
 <p>大型的项目，往往会划分为几个子项目。</p>
 <p>即使你只有一个子项目，也建议你先创建一个子目录，方便以后追加新的子项目。</p>
 <p>上面的案例中，我们在根目录下，创建了两个子项目 biology 和 pybmain，他们分别在各自的目录下有自己的 CMakeLists.txt。</p>
@@ -265,7 +288,7 @@
 <p>而加上 <code>CONFIGURE_DEPENDS</code> 后，每次运行 <code>cmake --build</code> 时，CMake 会自动检测目录是否有更新。如果发现有新文件，CMake 会自动重新运行 <code>cmake -B build</code>，从而更新 <code>myvar</code> 变量。</p>
 <p><strong>总结</strong>：使用 <code>CONFIGURE_DEPENDS</code> 可以确保在构建时自动检测文件变化，减少手动更新的需要，避免潜在的编译错误。</p>
 </li>
-<li><h3 id="头文件和源文件的一一对应关系"><a href="#头文件和源文件的一一对应关系" class="headerlink" title="头文件和源文件的一一对应关系"></a>头文件和源文件的一一对应关系</h3><p><img src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241031204325532.png" alt="image-20241031204325532" loading='lazy'></p>
+<li><h3 id="头文件和源文件的一一对应关系"><a href="#头文件和源文件的一一对应关系" class="headerlink" title="头文件和源文件的一一对应关系"></a>头文件和源文件的一一对应关系</h3><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241031204325532.png" alt="image-20241031204325532"></p>
 <p>通常每个头文件都有一个对应的源文件，两个文件名字应当相同（方便我们理解，也方便 IDE 跳转），只有后缀名不一样。</p>
 <p>如果是一个类，则文件名应和类名相同，方便查找（Animal.cpp）。</p>
 <p>头文件中包含函数和类的声明，源文件则包含他们的实现。</p>
@@ -282,7 +305,7 @@
 </li>
 <li><h3 id="每新增一个功能模块，需要创建两个文件"><a href="#每新增一个功能模块，需要创建两个文件" class="headerlink" title="每新增一个功能模块，需要创建两个文件"></a>每新增一个功能模块，需要创建两个文件</h3><p>每新增一个功能模块，同时添加同名的源文件和头文件。头文件中的声明和源文件中的实现一一对应。</p>
 <p>新添加功能模块：Carer</p>
-<p><img src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103195553720.png" alt="image-20241103195553720" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103195553720.png" alt="image-20241103195553720"></p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Carer.h</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> once</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;biology/Animal.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> biology &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Carer</span> &#123;</span><br><span class="line">  <span class="function">std::string <span class="title">care</span><span class="params">(Animal *a)</span> <span class="type">const</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">&#125;  <span class="comment">// namespace biology</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// carer.cpp</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;biology/Carer.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;biology/Animal.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sstream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> biology &#123;</span><br><span class="line"></span><br><span class="line"><span class="function">std::string <span class="title">Carer::care</span><span class="params">(Animal *a)</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">    std::ostringstream ss;</span><br><span class="line">    a-&gt;<span class="built_in">speak</span>(ss);</span><br><span class="line">    <span class="keyword">return</span> ss.<span class="built_in">str</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -315,15 +338,15 @@
 <li><h3 id="依赖另一个子项目，则需要链接他"><a href="#依赖另一个子项目，则需要链接他" class="headerlink" title="依赖另一个子项目，则需要链接他"></a>依赖另一个子项目，则需要链接他</h3><p>让 pybmain 链接上 biology：target_link_libraries(pybmain PUBLIC biology)</p>
 <p>由于 PUBLIC 属性具有传染性，根&#x2F;biology&#x2F;include 现在也加入 pybmain 的头文件搜索路径了，因此 pybmain 里可以 #include 到 biology 的头文件。</p>
 <p>同理如果又有一个 target_link_libraries(xxx PUBLIC pybmain) 那么 xxx 也有 pybmain 和 biology 的所有头文件搜索路径了。</p>
-<p><img src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103201713328.png" alt="image-20241103201713328" loading='lazy'></p>
-<p><img src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103201640425.png" alt="image-20241103201640425" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103201713328.png" alt="image-20241103201713328"></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103201640425.png" alt="image-20241103201640425"></p>
 </li>
 <li><h3 id="CMake的include流"><a href="#CMake的include流" class="headerlink" title="CMake的include流"></a>CMake的include流</h3><p>和 C&#x2F;C++ 的 #include 一样，CMake 也有一个 include 命令。</p>
 <p>你写 include(XXX)，则他会在 CMAKE_MODULE_PATH 这个列表中的所有路径下查找 XXX.cmake 这个文件。</p>
-<p><img src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103201932443.png" alt="image-20241103201932443" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103201932443.png" alt="image-20241103201932443"></p>
 <p>这样你可以在 XXX.cmake 里写一些你常用的函数，宏，变量等。</p>
-<p><img src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103202025325.png" alt="image-20241103202025325" loading='lazy'></p>
-<p><img src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103202050462.png" alt="image-20241103202050462" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103202025325.png" alt="image-20241103202025325"></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103202050462.png" alt="image-20241103202050462"></p>
 </li>
 </ol>
 <h2 id="二、第三方库、依赖项配置"><a href="#二、第三方库、依赖项配置" class="headerlink" title="二、第三方库、依赖项配置"></a>二、第三方库、依赖项配置</h2><h3 id="1-find-package命令"><a href="#1-find-package命令" class="headerlink" title="1. find_package命令"></a>1. find_package命令</h3><p>常用参数列表一览：</p>
@@ -444,21 +467,21 @@
 
 <p>那么如果有个不太热门的第三方库没提供包配置文件，CMake 也没提供包搜索文件，我们该如何找到他？这就需要自己提供包搜索文件了！别担心，你不用自己写，GitHub 上有很多志士仁人已经写过了对应的包搜索文件，你搜一下 FindXXX.cmake 就能找到了。</p>
 <p><strong>举例：FindJemalloc.cmake：</strong></p>
-<p><img src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103204451652.png" alt="image-20241103204451652" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103204451652.png" alt="image-20241103204451652"></p>
 <p>虽然 <strong>Config</strong> <strong>文件</strong>通常风格比较统一，都是 XXX::xxx 这种格式。但是不同的 <strong>Find</strong> <strong>文件</strong>，特别是这种网上志士仁人自己编写的文件，风格可能千差万别（没办法，毕竟不是官方的支持嘛），很多都还是古代 CMake 的用法，例如 ${XXX_LIBRARIES}。关于具体使用的细节可以打开 FindXXX.cmake 文件查看，他里面前半部分是注释，会讲解如何使用。</p>
 <p>现在你下载这个文件，放到 cmake&#x2F;FindXXX.cmake。然后在你的 CMakeLists.txt 里最上面写一行：</p>
 <p><code>set(CMAKE_MODULE_PATH “$&#123;CMAKE_CURRENT_LIST_DIR&#125;/cmake;$&#123;CMAKE_MODULE_PATH&#125;”)</code></p>
-<p><img src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103204549286.png" alt="image-20241103204549286" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103204549286.png" alt="image-20241103204549286"></p>
 <p>这样你之后的 find_package(XXX) 就会用你下载的这个 FindXXX.cmake 去找包了。</p>
-<h3 id="6-现代-vs-古代：Config和Find文件的区别"><a href="#6-现代-vs-古代：Config和Find文件的区别" class="headerlink" title="6. 现代 vs 古代：Config和Find文件的区别"></a>6. 现代 vs 古代：Config和Find文件的区别</h3><p><img src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103204719165.png" alt="image-20241103204719165" loading='lazy'></p>
+<h3 id="6-现代-vs-古代：Config和Find文件的区别"><a href="#6-现代-vs-古代：Config和Find文件的区别" class="headerlink" title="6. 现代 vs 古代：Config和Find文件的区别"></a>6. 现代 vs 古代：Config和Find文件的区别</h3><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103204719165.png" alt="image-20241103204719165"></p>
 <p>不管是 Find 类还是 Config 类，一定要打开相应的 cmake 文件看看注释，才能确定他是古代风格还是现代风格。</p>
 <p>古代 CMake 的命名规范高度不统一，有的是 <code>$&#123;XXX_LIBRARIES&#125;</code>，有的又是 <code>$&#123;XXX_LIBRARY&#125;</code> 非常沙雕，需要看相应 cmake 文件的注释，才能确定具体是怎么命名的。</p>
 <p>现代 CMake 就好多了，统一用 <strong>包名::组件名</strong> 的格式。但是具体的组件名，还是要查看 cmake 文件中的注释才能确定。例如 CURL::libcurl OpenCV::core Qt5::core TBB::tbb 等。</p>
 <p>大多现代的 Find&#x2F;Config 文件，都同时兼容现代和古代的用法。</p>
 <p>特别古老的 Find 文件，则只能用古代的用法。</p>
-<p><img src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103204752954.png" alt="image-20241103204752954" loading='lazy'></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103204752954.png" alt="image-20241103204752954"></p>
 <p>例如上图是 FindCURL.cmake 的注释，可以看到 IMPORTED Targets 章节是在介绍现代的用法，而 Result Variables 章节是在介绍古代的用法，我们尽量用现代的那种就行。</p>
-<h3 id="7-find-package-的两种模式"><a href="#7-find-package-的两种模式" class="headerlink" title="7. find_package 的两种模式"></a>7. find_package 的两种模式</h3><p><img src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103204833575.png" alt="image-20241103204833575" loading='lazy'></p>
+<h3 id="7-find-package-的两种模式"><a href="#7-find-package-的两种模式" class="headerlink" title="7. find_package 的两种模式"></a>7. find_package 的两种模式</h3><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/image-20241103204833575.png" alt="image-20241103204833575"></p>
 <p><strong>指定使用哪种模式：</strong></p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">find_package(TBB MODULE REQUIRED)</span><br></pre></td></tr></table></figure>
 
@@ -527,9 +550,166 @@
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">find_package(spdlog REQUIRED)</span><br><span class="line"></span><br><span class="line">target_link_libraries(yourapp PUBLIC spdlog::spdlog)</span><br></pre></td></tr></table></figure>
 
 <p>邪教方法：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">add_subdirectory(spdlog) # 需要下载好他们的源码放到你的根目录下</span><br><span class="line"></span><br><span class="line">target_link_libraries(yourapp PUBLIC spdlog)</span><br></pre></td></tr></table></figure></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://ming-z0.github.io">Ming</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://ming-z0.github.io/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/">https://ming-z0.github.io/2024/11/03/CPP/CMake/%E7%8E%B0%E4%BB%A3%E5%8C%96CMake%E6%A8%A1%E5%9D%97%E5%8C%96%E9%A1%B9%E7%9B%AE%E6%8C%87%E5%8D%97/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://ming-z0.github.io" target="_blank">MINGの部落格</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/CMake/">CMake</a></div><div class="post-share"><div class="social-share" data-image="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/13.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2024/11/04/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%BA%94%E3%80%81map%E5%92%8C%E4%BB%96%E7%9A%84%E6%9C%8B%E5%8F%8B%E4%BB%AC/" title="全面理解STL- std::map和它的朋友们"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/7.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">全面理解STL- std::map和它的朋友们</div></div><div class="info-2"><div class="info-item-1">！！本文内容搬运小彭老师现代C++大典内容，仅为个人学习备份使用，请大家支持原作者链接：✝️小彭大典✝️数据结构与复杂度不论什么语言，容器（或者用学校里的话说：数据结构）的正确使用，能够在复杂度层面上，大幅提升性能。 C++ 中也是如此，有数组（vector），字典（map），还有上一课讲过的集合（set）。 今天我们要介绍的就是 C++ 的字典容器 map，以及 C++11 引入的另一个字典容器 unordered_map，他们的区别我们最后会详细讨论。我们先学习较为简单的 map，随后学习 unordered_map...</div></div></div></a><a class="pagination-related" href="/2024/11/01/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC8%E7%AB%A0/" title="CUDA开始的GPU编程-第八章"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/10.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">CUDA开始的GPU编程-第八章</div></div><div class="info-2"><div class="info-item-1">第8章：板块与共享内存为什么需要区分出板块的概念？之前说到实际的线程数量就是板块数量(gridDim)乘以每板块线程数量(blockDim)。 那么为什么中间要插一个板块呢？感觉很不直观，不如直接说线程数量不就好了？ 这还得从 GPU 的硬件架构说起。   SM（Streaming Multiprocessors）与板块（block）GPU 是由多个流式多处理器（SM）组成的。每个 SM 可以处理一个或多个板块。 SM 又由多个流式单处理器（SP）组成。每个 SP 可以处理一个或多个线程。 每个 SM 都有自己的一块共享内存（shared memory），他的性质类似于 CPU...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2024/10/17/CPP/CMake/%E7%8E%B0%E4%BB%A3CMake/" title="现代CMake"><img class="cover" src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/15.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-17</div><div class="info-item-2">现代CMake</div></div><div class="info-2"><div class="info-item-1"> 现代CMake指的是 CMake 3.x  古代CMake指的是 CMake 2.x  现代CMake比古代CMake使用更加方便，功能更加强大   命令行小技巧传统构建方式对比：1234567891011# 古代 CMakemkdir -p build	# 创建build目录cd build	# 切换到build目录cmake ..	# 在build目录运行cmake &lt;源码目录&gt;生成Makefilemake -j4	# 执行本地的构建系统 make 真正开始构建（4进程并行）make install	# 让本地构建系统执行安装步骤# 现代 CMakecmake -B...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div class="comment-switch"><span class="first-comment">Twikoo</span><span id="switch-btn"></span><span class="second-comment">Livere</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div><div><div id="lv-container" data-id="city" data-uid="MTAyMC82MDIzOS8zNjcwNw"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Ming</div><div class="author-info-description">一个记录、分享自己学习过程的博客</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">28</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">15</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">9</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/ming-z0" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:ming-zhanglu@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到MINGの部落格！</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%96%87%E4%BB%B6%E3%80%81%E7%9B%AE%E5%BD%95%E7%BB%84%E7%BB%87%E8%A7%84%E8%8C%83"><span class="toc-number">1.</span> <span class="toc-text">一、文件、目录组织规范</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E6%8E%A8%E8%8D%90%E7%9A%84%E7%9B%AE%E5%BD%95%E7%BB%84%E7%BB%87%E6%96%B9%E5%BC%8F"><span class="toc-number">1.1.</span> <span class="toc-text">1. 推荐的目录组织方式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%92%E5%88%86%E5%AD%90%E9%A1%B9%E7%9B%AE"><span class="toc-number">1.2.</span> <span class="toc-text">划分子项目</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B9%E9%A1%B9%E7%9B%AE%E7%9A%84CMakeLists-txt-%E9%85%8D%E7%BD%AE"><span class="toc-number">1.3.</span> <span class="toc-text">根项目的CMakeLists.txt 配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AD%90%E9%A1%B9%E7%9B%AE%E7%9A%84CMakeLists-txt-%E9%85%8D%E7%BD%AE"><span class="toc-number">1.4.</span> <span class="toc-text">子项目的CMakeLists.txt 配置</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AD%90%E9%A1%B9%E7%9B%AE%E5%A4%B4%E6%96%87%E4%BB%B6"><span class="toc-number">1.4.1.</span> <span class="toc-text">子项目头文件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AD%90%E9%A1%B9%E7%9B%AE%E6%BA%90%E6%96%87%E4%BB%B6"><span class="toc-number">1.4.2.</span> <span class="toc-text">子项目源文件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%8D%E4%B9%A0%EF%BC%9AGLOB%E5%92%8CGLOB-RECURUSE%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">1.4.3.</span> <span class="toc-text">复习：GLOB和GLOB_RECURUSE的区别</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%B4%E6%96%87%E4%BB%B6%E5%92%8C%E6%BA%90%E6%96%87%E4%BB%B6%E7%9A%84%E4%B8%80%E4%B8%80%E5%AF%B9%E5%BA%94%E5%85%B3%E7%B3%BB"><span class="toc-number">1.5.</span> <span class="toc-text">头文件和源文件的一一对应关系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%AA%E6%9C%89%E5%A4%B4%E6%96%87%E4%BB%B6%EF%BC%8C%E6%B2%A1%E6%9C%89%E6%BA%90%E6%96%87%E4%BB%B6%E7%9A%84%E6%83%85%E5%86%B5"><span class="toc-number">1.6.</span> <span class="toc-text">只有头文件，没有源文件的情况</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AF%8F%E6%96%B0%E5%A2%9E%E4%B8%80%E4%B8%AA%E5%8A%9F%E8%83%BD%E6%A8%A1%E5%9D%97%EF%BC%8C%E9%9C%80%E8%A6%81%E5%88%9B%E5%BB%BA%E4%B8%A4%E4%B8%AA%E6%96%87%E4%BB%B6"><span class="toc-number">1.7.</span> <span class="toc-text">每新增一个功能模块，需要创建两个文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA%E6%A8%A1%E5%9D%97%E4%BE%9D%E8%B5%96%E5%85%B6%E4%BB%96%E6%A8%A1%E5%9D%97%EF%BC%8C%E5%88%99%E5%BA%94%E5%AF%BC%E5%85%A5%E4%BB%96%E7%9A%84%E5%A4%B4%E6%96%87%E4%BB%B6"><span class="toc-number">1.8.</span> <span class="toc-text">一个模块依赖其他模块，则应导入他的头文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BE%9D%E8%B5%96%E5%85%B6%E4%BB%96%E6%A8%A1%E5%9D%97%E4%BD%86%E4%B8%8D%E8%A7%A3%E5%BC%95%E7%94%A8%EF%BC%8C%E5%88%99-%E5%8F%AF%E4%BB%A5%E5%8F%AA%E5%90%91%E5%89%8D%E5%A3%B0%E6%98%8E%E4%B8%8D%E5%AF%BC%E5%85%A5%E5%A4%B4%E6%96%87%E4%BB%B6"><span class="toc-number">1.9.</span> <span class="toc-text">依赖其他模块但不解引用，则 可以只向前声明不导入头文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%A5%E9%A1%B9%E7%9B%AE%E5%90%8D%E4%B8%BA%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4-namespace-%EF%BC%8C%E9%81%BF%E5%85%8D%E7%AC%A6%E5%8F%B7%E5%86%B2%E7%AA%81"><span class="toc-number">1.10.</span> <span class="toc-text">以项目名为命名空间(namespace)，避免符号冲突</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BE%9D%E8%B5%96%E5%8F%A6%E4%B8%80%E4%B8%AA%E5%AD%90%E9%A1%B9%E7%9B%AE%EF%BC%8C%E5%88%99%E9%9C%80%E8%A6%81%E9%93%BE%E6%8E%A5%E4%BB%96"><span class="toc-number">1.11.</span> <span class="toc-text">依赖另一个子项目，则需要链接他</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CMake%E7%9A%84include%E6%B5%81"><span class="toc-number">1.12.</span> <span class="toc-text">CMake的include流</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E7%AC%AC%E4%B8%89%E6%96%B9%E5%BA%93%E3%80%81%E4%BE%9D%E8%B5%96%E9%A1%B9%E9%85%8D%E7%BD%AE"><span class="toc-number">2.</span> <span class="toc-text">二、第三方库、依赖项配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-find-package%E5%91%BD%E4%BB%A4"><span class="toc-number">2.1.</span> <span class="toc-text">1. find_package命令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%89%BE%E7%9A%84%E2%80%9C%E5%8C%85%E2%80%9C%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-number">2.2.</span> <span class="toc-text">2. 找的“包“到底是什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%90%9C%E7%B4%A2%E8%B7%AF%E5%BE%84"><span class="toc-number">2.3.</span> <span class="toc-text">3. 搜索路径</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E5%AE%89%E8%A3%85%E5%9C%A8%E9%9D%9E%E6%A0%87%E5%87%86%E8%B7%AF%E5%BE%84%E7%9A%84%E5%BA%93"><span class="toc-number">2.4.</span> <span class="toc-text">4. 安装在非标准路径的库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E5%81%87%E5%A6%82%E6%B2%A1%E6%9C%89Config%E6%96%87%E4%BB%B6"><span class="toc-number">2.5.</span> <span class="toc-text">5. 假如没有Config文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E7%8E%B0%E4%BB%A3-vs-%E5%8F%A4%E4%BB%A3%EF%BC%9AConfig%E5%92%8CFind%E6%96%87%E4%BB%B6%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">2.6.</span> <span class="toc-text">6. 现代 vs 古代：Config和Find文件的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-find-package-%E7%9A%84%E4%B8%A4%E7%A7%8D%E6%A8%A1%E5%BC%8F"><span class="toc-number">2.7.</span> <span class="toc-text">7. find_package 的两种模式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-%E5%85%B3%E4%BA%8Evcpkg%E7%9A%84%E5%9D%91"><span class="toc-number">2.8.</span> <span class="toc-text">8. 关于vcpkg的坑</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-find-package-%E5%91%BD%E4%BB%A4%E6%8C%87%E5%AE%9A%E7%89%88%E6%9C%AC"><span class="toc-number">2.9.</span> <span class="toc-text">9. find_package 命令指定版本</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B6%E4%BB%96%E8%A1%A5%E5%85%85%E4%B8%8E%E7%A7%91%E6%99%AE"><span class="toc-number">3.</span> <span class="toc-text">其他补充与科普</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#macro-%E5%92%8C-function-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">3.1.</span> <span class="toc-text">macro 和 function 的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#include-%E5%92%8C-add-subdirectory-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">3.2.</span> <span class="toc-text">include 和 add_subdirectory 的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%B2-Unix-%E8%BD%AF%E4%BB%B6%E4%BB%8E%E6%BA%90%E7%A0%81%E5%AE%89%E8%A3%85%E7%9A%84%E9%80%9A%E7%94%A8%E5%A5%97%E8%B7%AF"><span class="toc-number">3.3.</span> <span class="toc-text">亲 Unix 软件从源码安装的通用套路</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%AD%E4%B9%89%E7%89%88%E6%9C%AC%E5%8F%B7%EF%BC%88semantic-versioning%EF%BC%89%E7%B3%BB%E7%BB%9F"><span class="toc-number">3.4.</span> <span class="toc-text">语义版本号（semantic versioning）系统</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%A4%E4%BB%A3CMake%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="toc-number">3.5.</span> <span class="toc-text">古代CMake常见问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%91%E8%A7%81%E7%9A%84-add-subdirectory-%E9%82%AA%E6%95%99"><span class="toc-number">3.6.</span> <span class="toc-text">少见的 add_subdirectory 邪教</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/08/21/%E9%9D%A2%E8%AF%95/resume/" title="无标题"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/18.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="无标题"/></a><div class="content"><a class="title" href="/2025/08/21/%E9%9D%A2%E8%AF%95/resume/" title="无标题">无标题</a><time datetime="2025-08-21T06:22:29.836Z" title="发表于 2025-08-21 14:22:29">2025-08-21</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/9.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AimRT官方示例解析"/></a><div class="content"><a class="title" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析">AimRT官方示例解析</a><time datetime="2025-05-17T16:00:00.000Z" title="发表于 2025-05-18 00:00:00">2025-05-18</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/01/04/%E6%9D%82%E9%A1%B9/sphinx%20%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/20.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="sphinx 使用指南"/></a><div class="content"><a class="title" href="/2025/01/04/%E6%9D%82%E9%A1%B9/sphinx%20%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南">sphinx 使用指南</a><time datetime="2025-01-03T16:00:00.000Z" title="发表于 2025-01-04 00:00:00">2025-01-04</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/19.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++协程入门"/></a><div class="content"><a class="title" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门">C++协程入门</a><time datetime="2024-11-19T16:00:00.000Z" title="发表于 2024-11-20 00:00:00">2024-11-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化"><img src="/./img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/8.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="深入浅出访存优化"/></a><div class="content"><a class="title" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化">深入浅出访存优化</a><time datetime="2024-11-09T16:00:00.000Z" title="发表于 2024-11-10 00:00:00">2024-11-10</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url(./img/文章封面/13.jpg);"><div id="footer-wrap"><div class="copyright">&copy;2023 - 2025 By Ming</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat-btn" type="button" title="聊天" style="display:none"><i class="fas fa-message"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
-  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
-  const option = null
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">add_subdirectory(spdlog) # 需要下载好他们的源码放到你的根目录下</span><br><span class="line"></span><br><span class="line">target_link_libraries(yourapp PUBLIC spdlog)</span><br></pre></td></tr></table></figure></article><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/11/01/CPP/CUDA/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B/CUDA%E5%BC%80%E5%A7%8B%E7%9A%84GPU%E7%BC%96%E7%A8%8B-%E7%AC%AC8%E7%AB%A0/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/3.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">CUDA开始的GPU编程-第八章</div></div></a></div><div class="next-post pull-right"><a href="/2024/11/04/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%BA%94%E3%80%81map%E5%92%8C%E4%BB%96%E7%9A%84%E6%9C%8B%E5%8F%8B%E4%BB%AC/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">全面理解STL- std::map和它的朋友们</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2024/10/17/CPP/CMake/%E7%8E%B0%E4%BB%A3CMake/" title="现代CMake"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/6.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2024-10-17</div><div class="title">现代CMake</div></div></a></div><div><a href="/2024/10/21/CPP/%E6%A0%87%E5%87%86%E5%BA%93/%E4%B8%80%E3%80%81%E5%89%8D%E8%A8%80/" title="全面理解STL-前言"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/5.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2024-10-21</div><div class="title">全面理解STL-前言</div></div></a></div><div><a href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2024-11-20</div><div class="title">C++协程入门</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="anzhiyufont anzhiyu-icon-comments"></i><span> 评论</span></div><div class="comment-randomInfo"><a onclick="anzhiyu.addRandomCommentInfo()" href="javascript:void(0)">匿名评论</a><a href="/privacy" style="margin-left: 4px">隐私政策</a></div><div class="comment-tips" id="comment-tips"><span>✅ 你无需删除空行，直接评论以获取最佳展示效果</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div><div class="comment-barrage"></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E9%85%8D%E7%BD%AE/%E5%A4%B4%E5%83%8F.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description">一个记录、分享自己学习过程的博客</div><div class="author-info__bottom-group"><a class="author-info__bottom-group-left" href="/"><h1 class="author-info__name">Ming</h1><div class="author-info__desc">MINGの部落格</div></a><div class="card-info-social-icons is-center"><a class="social-icon faa-parent animated-hover" href="https://github.com/MING-Z0/" target="_blank" title="Github"><i class="anzhiyufont anzhiyu-icon-github"></i></a><a class="social-icon faa-parent animated-hover" href="https://space.bilibili.com/484647453" target="_blank" title="BiliBili"><i class="anzhiyufont anzhiyu-icon-bilibili"></i></a></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%96%87%E4%BB%B6%E3%80%81%E7%9B%AE%E5%BD%95%E7%BB%84%E7%BB%87%E8%A7%84%E8%8C%83"><span class="toc-number">1.</span> <span class="toc-text">一、文件、目录组织规范</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E6%8E%A8%E8%8D%90%E7%9A%84%E7%9B%AE%E5%BD%95%E7%BB%84%E7%BB%87%E6%96%B9%E5%BC%8F"><span class="toc-number">1.1.</span> <span class="toc-text">1. 推荐的目录组织方式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%92%E5%88%86%E5%AD%90%E9%A1%B9%E7%9B%AE"><span class="toc-number">1.2.</span> <span class="toc-text">划分子项目</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B9%E9%A1%B9%E7%9B%AE%E7%9A%84CMakeLists-txt-%E9%85%8D%E7%BD%AE"><span class="toc-number">1.3.</span> <span class="toc-text">根项目的CMakeLists.txt 配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AD%90%E9%A1%B9%E7%9B%AE%E7%9A%84CMakeLists-txt-%E9%85%8D%E7%BD%AE"><span class="toc-number">1.4.</span> <span class="toc-text">子项目的CMakeLists.txt 配置</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AD%90%E9%A1%B9%E7%9B%AE%E5%A4%B4%E6%96%87%E4%BB%B6"><span class="toc-number">1.4.1.</span> <span class="toc-text">子项目头文件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AD%90%E9%A1%B9%E7%9B%AE%E6%BA%90%E6%96%87%E4%BB%B6"><span class="toc-number">1.4.2.</span> <span class="toc-text">子项目源文件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%8D%E4%B9%A0%EF%BC%9AGLOB%E5%92%8CGLOB-RECURUSE%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">1.4.3.</span> <span class="toc-text">复习：GLOB和GLOB_RECURUSE的区别</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%B4%E6%96%87%E4%BB%B6%E5%92%8C%E6%BA%90%E6%96%87%E4%BB%B6%E7%9A%84%E4%B8%80%E4%B8%80%E5%AF%B9%E5%BA%94%E5%85%B3%E7%B3%BB"><span class="toc-number">1.5.</span> <span class="toc-text">头文件和源文件的一一对应关系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%AA%E6%9C%89%E5%A4%B4%E6%96%87%E4%BB%B6%EF%BC%8C%E6%B2%A1%E6%9C%89%E6%BA%90%E6%96%87%E4%BB%B6%E7%9A%84%E6%83%85%E5%86%B5"><span class="toc-number">1.6.</span> <span class="toc-text">只有头文件，没有源文件的情况</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AF%8F%E6%96%B0%E5%A2%9E%E4%B8%80%E4%B8%AA%E5%8A%9F%E8%83%BD%E6%A8%A1%E5%9D%97%EF%BC%8C%E9%9C%80%E8%A6%81%E5%88%9B%E5%BB%BA%E4%B8%A4%E4%B8%AA%E6%96%87%E4%BB%B6"><span class="toc-number">1.7.</span> <span class="toc-text">每新增一个功能模块，需要创建两个文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA%E6%A8%A1%E5%9D%97%E4%BE%9D%E8%B5%96%E5%85%B6%E4%BB%96%E6%A8%A1%E5%9D%97%EF%BC%8C%E5%88%99%E5%BA%94%E5%AF%BC%E5%85%A5%E4%BB%96%E7%9A%84%E5%A4%B4%E6%96%87%E4%BB%B6"><span class="toc-number">1.8.</span> <span class="toc-text">一个模块依赖其他模块，则应导入他的头文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BE%9D%E8%B5%96%E5%85%B6%E4%BB%96%E6%A8%A1%E5%9D%97%E4%BD%86%E4%B8%8D%E8%A7%A3%E5%BC%95%E7%94%A8%EF%BC%8C%E5%88%99-%E5%8F%AF%E4%BB%A5%E5%8F%AA%E5%90%91%E5%89%8D%E5%A3%B0%E6%98%8E%E4%B8%8D%E5%AF%BC%E5%85%A5%E5%A4%B4%E6%96%87%E4%BB%B6"><span class="toc-number">1.9.</span> <span class="toc-text">依赖其他模块但不解引用，则 可以只向前声明不导入头文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%A5%E9%A1%B9%E7%9B%AE%E5%90%8D%E4%B8%BA%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4-namespace-%EF%BC%8C%E9%81%BF%E5%85%8D%E7%AC%A6%E5%8F%B7%E5%86%B2%E7%AA%81"><span class="toc-number">1.10.</span> <span class="toc-text">以项目名为命名空间(namespace)，避免符号冲突</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BE%9D%E8%B5%96%E5%8F%A6%E4%B8%80%E4%B8%AA%E5%AD%90%E9%A1%B9%E7%9B%AE%EF%BC%8C%E5%88%99%E9%9C%80%E8%A6%81%E9%93%BE%E6%8E%A5%E4%BB%96"><span class="toc-number">1.11.</span> <span class="toc-text">依赖另一个子项目，则需要链接他</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CMake%E7%9A%84include%E6%B5%81"><span class="toc-number">1.12.</span> <span class="toc-text">CMake的include流</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E7%AC%AC%E4%B8%89%E6%96%B9%E5%BA%93%E3%80%81%E4%BE%9D%E8%B5%96%E9%A1%B9%E9%85%8D%E7%BD%AE"><span class="toc-number">2.</span> <span class="toc-text">二、第三方库、依赖项配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-find-package%E5%91%BD%E4%BB%A4"><span class="toc-number">2.1.</span> <span class="toc-text">1. find_package命令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%89%BE%E7%9A%84%E2%80%9C%E5%8C%85%E2%80%9C%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-number">2.2.</span> <span class="toc-text">2. 找的“包“到底是什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%90%9C%E7%B4%A2%E8%B7%AF%E5%BE%84"><span class="toc-number">2.3.</span> <span class="toc-text">3. 搜索路径</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E5%AE%89%E8%A3%85%E5%9C%A8%E9%9D%9E%E6%A0%87%E5%87%86%E8%B7%AF%E5%BE%84%E7%9A%84%E5%BA%93"><span class="toc-number">2.4.</span> <span class="toc-text">4. 安装在非标准路径的库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E5%81%87%E5%A6%82%E6%B2%A1%E6%9C%89Config%E6%96%87%E4%BB%B6"><span class="toc-number">2.5.</span> <span class="toc-text">5. 假如没有Config文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E7%8E%B0%E4%BB%A3-vs-%E5%8F%A4%E4%BB%A3%EF%BC%9AConfig%E5%92%8CFind%E6%96%87%E4%BB%B6%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">2.6.</span> <span class="toc-text">6. 现代 vs 古代：Config和Find文件的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-find-package-%E7%9A%84%E4%B8%A4%E7%A7%8D%E6%A8%A1%E5%BC%8F"><span class="toc-number">2.7.</span> <span class="toc-text">7. find_package 的两种模式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-%E5%85%B3%E4%BA%8Evcpkg%E7%9A%84%E5%9D%91"><span class="toc-number">2.8.</span> <span class="toc-text">8. 关于vcpkg的坑</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-find-package-%E5%91%BD%E4%BB%A4%E6%8C%87%E5%AE%9A%E7%89%88%E6%9C%AC"><span class="toc-number">2.9.</span> <span class="toc-text">9. find_package 命令指定版本</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B6%E4%BB%96%E8%A1%A5%E5%85%85%E4%B8%8E%E7%A7%91%E6%99%AE"><span class="toc-number">3.</span> <span class="toc-text">其他补充与科普</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#macro-%E5%92%8C-function-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">3.1.</span> <span class="toc-text">macro 和 function 的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#include-%E5%92%8C-add-subdirectory-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">3.2.</span> <span class="toc-text">include 和 add_subdirectory 的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%B2-Unix-%E8%BD%AF%E4%BB%B6%E4%BB%8E%E6%BA%90%E7%A0%81%E5%AE%89%E8%A3%85%E7%9A%84%E9%80%9A%E7%94%A8%E5%A5%97%E8%B7%AF"><span class="toc-number">3.3.</span> <span class="toc-text">亲 Unix 软件从源码安装的通用套路</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%AD%E4%B9%89%E7%89%88%E6%9C%AC%E5%8F%B7%EF%BC%88semantic-versioning%EF%BC%89%E7%B3%BB%E7%BB%9F"><span class="toc-number">3.4.</span> <span class="toc-text">语义版本号（semantic versioning）系统</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%A4%E4%BB%A3CMake%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="toc-number">3.5.</span> <span class="toc-text">古代CMake常见问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%91%E8%A7%81%E7%9A%84-add-subdirectory-%E9%82%AA%E6%95%99"><span class="toc-number">3.6.</span> <span class="toc-text">少见的 add_subdirectory 邪教</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/6.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AimRT官方示例解析"/></a><div class="content"><a class="title" href="/2025/05/18/AimRT/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/AimRT%E5%AE%98%E6%96%B9%E7%A4%BA%E4%BE%8B%E8%A7%A3%E6%9E%90/" title="AimRT官方示例解析">AimRT官方示例解析</a><time datetime="2025-05-17T16:00:00.000Z" title="发表于 2025-05-18 00:00:00">2025-05-18</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/01/04/%E9%9A%8F%E8%AE%B0/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/5.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="sphinx 使用指南"/></a><div class="content"><a class="title" href="/2025/01/04/%E9%9A%8F%E8%AE%B0/sphinx%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" title="sphinx 使用指南">sphinx 使用指南</a><time datetime="2025-01-03T16:00:00.000Z" title="发表于 2025-01-04 00:00:00">2025-01-04</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++协程入门"/></a><div class="content"><a class="title" href="/2024/11/20/CPP/CPP20%E5%8D%8F%E7%A8%8B/CPP20%E5%8D%8F%E7%A8%8B%E5%85%A5%E9%97%A8/" title="C++协程入门">C++协程入门</a><time datetime="2024-11-19T16:00:00.000Z" title="发表于 2024-11-20 00:00:00">2024-11-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/4.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="深入浅出访存优化"/></a><div class="content"><a class="title" href="/2024/11/10/CPP/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" title="深入浅出访存优化">深入浅出访存优化</a><time datetime="2024-11-09T16:00:00.000Z" title="发表于 2024-11-10 00:00:00">2024-11-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/09/CPP/%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B/TBB%E5%BC%80%E5%90%AF%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%97%85/" title="TBB开启并行编程之旅"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/%E6%96%87%E7%AB%A0%E5%B0%81%E9%9D%A2/2.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TBB开启并行编程之旅"/></a><div class="content"><a class="title" href="/2024/11/09/CPP/%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B/TBB%E5%BC%80%E5%90%AF%E5%B9%B6%E8%A1%8C%E7%BC%96%E7%A8%8B%E4%B9%8B%E6%97%85/" title="TBB开启并行编程之旅">TBB开启并行编程之旅</a><time datetime="2024-11-08T16:00:00.000Z" title="发表于 2024-11-09 00:00:00">2024-11-09</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div id="footer_deal"><a class="deal_link" href="/ming-zhanglu@outlook.com" title="email"><i class="anzhiyufont anzhiyu-icon-envelope"></i></a><img class="footer_mini_logo" title="返回顶部" alt="返回顶部" onclick="anzhiyu.scrollToDest(0, 500)" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/配置/头像.jpg" size="50px"/><a class="deal_link" target="_blank" rel="noopener" href="https://github.com/ming-z0" title="Github"><i class="anzhiyufont anzhiyu-icon-github"></i></a><a class="deal_link" target="_blank" rel="noopener" href="https://space.bilibili.com/484647453" title="Bilibili"><i class="anzhiyufont anzhiyu-icon-bilibili"></i></a></div><div id="workboard"><img class="workSituationImg boardsign" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@2.0.4/img/badge/安知鱼-上班摸鱼中.svg" alt="距离月入25k也就还差一个大佬带我~" title="距离月入25k也就还差一个大佬带我~"/><div id="runtimeTextTip"></div></div><p id="ghbdages"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" data-title="博客框架为Hexo_v5.4.0" title="博客框架为Hexo_v5.4.0"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@2.1.5/img/badge/Frame-Hexo.svg" alt="博客框架为Hexo_v5.4.0"/></a><a class="github-badge" target="_blank" href="https://blog.anheyu.com/" style="margin-inline:5px" data-title="本站使用AnZhiYu主题" title="本站使用AnZhiYu主题"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.9/img/Theme-AnZhiYu-2E67D3.svg" alt="本站使用AnZhiYu主题"/></a><a class="github-badge" target="_blank" href="https://github.com/" style="margin-inline:5px" data-title="本站项目由Github托管" title="本站项目由Github托管"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@2.1.5/img/badge/Source-Github.svg" alt="本站项目由Github托管"/></a></p></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2023 - 2025 By <a class="footer-bar-link" href="/" title="Ming" target="_blank">Ming</a></div></div><div id="footer-type-tips"></div><div class="js-pjax"><script>function subtitleType () {
+  getScript('https://sdk.jinrishici.com/v2/browser/jinrishici.js').then(() => {
+    jinrishici.load(result =>{
+      if (true) {
+        const sub = ["生活明朗&#44; 万物可爱&#44; 人间值得&#44; 未来可期."]
+        const content = result.data.content
+        sub.unshift(content)
+        window.typed = new Typed('#footer-type-tips', {
+          strings: sub,
+          startDelay: 300,
+          typeSpeed: 150,
+          loop: true,
+          backSpeed: 50,
+        })
+      } else {
+        document.getElementById('footer-type-tips').innerHTML = result.data.content
+      }
+    })
+  })
+}
+
+if (true) {
+  if (typeof Typed === 'function') {
+    subtitleType()
+  } else {
+    getScript('https://cdn.cbd.int/typed.js@2.1.0/dist/typed.umd.js').then(subtitleType)
+  }
+} else {
+  subtitleType()
+}
+</script></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">27</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">7</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://ming-blog.top/" title="MINGの部落格"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/配置/头像.jpg" alt="MINGの部落格"/><span class="back-menu-item-text">MINGの部落格</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://github.com/MING-Z0/" title="GitHub"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="GitHub"/><span class="back-menu-item-text">GitHub</span></a></div></div></div><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/archives/"><span> 隧道</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/categories/"><span> 分类</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/tags/"><span> 标签</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/link/"><span> 友人帐</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/about/"><span> 关于本人</span></a></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/AimRT/" style="font-size: 0.88rem;">AimRT<sup>1</sup></a><a href="/tags/CMake/" style="font-size: 0.88rem;">CMake<sup>2</sup></a><a href="/tags/CPP/" style="font-size: 0.88rem;">CPP<sup>21</sup></a><a href="/tags/CUDA/" style="font-size: 0.88rem;">CUDA<sup>10</sup></a><a href="/tags/STL/" style="font-size: 0.88rem;">STL<sup>5</sup></a><a href="/tags/%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97/" style="font-size: 0.88rem;">并行计算<sup>12</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/" style="font-size: 0.88rem;">开发环境<sup>1</sup></a><a href="/tags/%E5%BC%80%E5%8F%91%E8%AF%AD%E8%A8%80/" style="font-size: 0.88rem;">开发语言<sup>5</sup></a><a href="/tags/%E6%9C%BA%E5%99%A8%E4%BA%BA/" style="font-size: 0.88rem;">机器人<sup>1</sup></a><a href="/tags/%E8%AE%BF%E5%AD%98%E4%BC%98%E5%8C%96/" style="font-size: 0.88rem;">访存优化<sup>1</sup></a><a href="/tags/%E9%9A%8F%E8%AE%B0/" style="font-size: 0.88rem;">随记<sup>5</sup></a><a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 0.88rem;">面试<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="anzhiyufont anzhiyu-icon-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="12875524711" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random" volume="0.5"></meting-js></div><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="anzhiyufont anzhiyu-icon-xmark"></i></button></nav><div class="is-center" id="loading-database"><i class="anzhiyufont anzhiyu-icon-spinner anzhiyu-pulse-icon"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div></div></div><div id="search-mask"></div></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://music.163.com/#/my/m/music/playlist?id=12875524711&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/medium-zoom@1.1.0/dist/medium-zoom.min.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.5/dist/lazyload.iife.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.cbd.int/pangu@4.0.7/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (false){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script async src="/anzhiyu/random.js"></script><script async="async">(function () {
+  var grt = new Date("04/01/2021 00:00:00"); //设置网站上线时间
+  var now = new Date();
+  var dnum;
+  var hnum;
+  var mnum;
+  var snum;
+  var nowHour;
+
+  // 计算并更新天数、小时数、分钟数和秒数
+  function updateTime() {
+    now = new Date(); // 更新 now 的值
+    nowHour = now.getHours(); // 更新 nowHour 的值
+    var days = (now - grt) / 1000 / 60 / 60 / 24;
+    dnum = Math.floor(days);
+    var hours = (now - grt) / 1000 / 60 / 60 - 24 * dnum;
+    hnum = Math.floor(hours);
+    if (String(hnum).length == 1) {
+      hnum = "0" + hnum;
+    }
+    var minutes = (now - grt) / 1000 / 60 - 24 * 60 * dnum - 60 * hnum;
+    mnum = Math.floor(minutes);
+    if (String(mnum).length == 1) {
+      mnum = "0" + mnum;
+    }
+    var seconds = (now - grt) / 1000 - 24 * 60 * 60 * dnum - 60 * 60 * hnum - 60 * mnum;
+    snum = Math.round(seconds);
+    if (String(snum).length == 1) {
+      snum = "0" + snum;
+    }
+  }
+
+  // 更新网页中显示的网站运行时间
+  function updateHtml() {
+    const footer = document.getElementById("footer");
+    if (!footer) return
+    let currentTimeHtml = "";
+    if (nowHour < 18 && nowHour >= 9) {
+      // 如果是上班时间，默认就是"安知鱼-上班摸鱼中.svg"图片，不需要更改
+      currentTimeHtml = `本站居然运行了 ${dnum} 天<span id='runtime'> ${hnum} 小时 ${mnum} 分 ${snum} 秒 </span><i class='anzhiyufont anzhiyu-icon-heartbeat' style='color:red'></i>`;
+    } else {
+      // 如果是下班时间，插入"安知鱼-下班啦.svg"图片
+      let img = document.querySelector("#workboard .workSituationImg");
+      if (img != null) {
+        img.src = "https://npm.elemecdn.com/anzhiyu-blog@2.0.4/img/badge/安知鱼-下班啦.svg";
+        img.title = "下班了就该开开心心的玩耍，嘿嘿~";
+        img.alt = "下班了就该开开心心的玩耍，嘿嘿~";
+      }
+
+      currentTimeHtml = `本站居然运行了 ${dnum} 天<span id='runtime'> ${hnum} 小时 ${mnum} 分 ${snum} 秒 </span><i class='anzhiyufont anzhiyu-icon-heartbeat' style='color:red'></i>`;
+    }
+
+    if (document.getElementById("runtimeTextTip")) {
+      document.getElementById("runtimeTextTip").innerHTML = currentTimeHtml;
+    }
+  }
+
+  setInterval(() => {
+    updateTime();
+    updateHtml();
+  }, 1000);
+})();</script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      tags: 'ams'
+    },
+    chtml: {
+      scale: 1.1
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, '']
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.cbd.int/mathjax@3.2.2/es5/tex-mml-chtml.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typesetPromise()
+}</script><script>(() => {
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
+      region: '',
+      onCommentLoaded: () => {
+        anzhiyu.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') setTimeout(runFn,0)
+    else getScript('https://cdn.cbd.int/twikoo@1.6.39/dist/twikoo.all.min.js').then(runFn)
+  }
 
   const getCount = () => {
     const countELement = document.getElementById('twikoo-count')
@@ -546,187 +726,168 @@
     })
   }
 
-  const init = (el = document, path = location.pathname) => {
-    twikoo.init({
-      el: el.querySelector('#twikoo-wrap'),
-      envId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
-      region: '',
-      onCommentLoaded: () => {
-        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
-      },
-      ...option,
-      path: isShuoshuo ? path : (option && option.path) || path
-    })
-
+  const runFn = () => {
+    init();
     
-
-    isShuoshuo && (window.shuoshuoComment.destroyTwikoo = () => {
-      if (el.children.length) {
-        el.innerHTML = ''
-        el.classList.add('no-comment')
-      }
-    })
-  }
-
-  const loadTwikoo = (el, path) => {
-    if (typeof twikoo === 'object') setTimeout(() => init(el, path), 0)
-    else btf.getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(() => init(el, path))
-  }
-
-  if (isShuoshuo) {
-    'Twikoo' === 'Twikoo'
-      ? window.shuoshuoComment = { loadComment: loadTwikoo }
-      : window.loadOtherComment = loadTwikoo
-    return
   }
 
   if ('Twikoo' === 'Twikoo' || !false) {
-    if (false) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
-    else loadTwikoo()
+    if (false) anzhiyu.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else {
+      loadTwikoo()
+    }
   } else {
     window.loadOtherComment = loadTwikoo
   }
-})()</script><script>(() => {
-  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+})()</script><input type="hidden" name="page-type" id="page-type" value="post"></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
 
-  const loadLivere = (el, path) => {
-    window.livereOptions = {
-      refer: path || location.pathname
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[图片]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[链接]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[代码]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://vercel-c6qs1so68-mings-projects-7cb05430.vercel.app/',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "无法获取评论，请确认相关配置是否正确"
+      })
     }
 
-    if (isShuoshuo) {
-      window.shuoshuoComment.destroyLivere = () => {
-        if (el.children.length) {
-          el.innerHTML = ''
-          el.classList.add('no-comment')
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.cbd.int/twikoo@1.6.39/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'data-lazy-src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'><div class='name'><span>${array[i].nick} </span></div></a>`
         }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <time datetime="${array[i].date}">${anzhiyu.diffDate(array[i].date, true)}</time></div>
+        </div>`
       }
+    } else {
+      result += '没有评论'
     }
 
-    if (typeof LivereTower === 'object') window.LivereTower.init()
-    else {
-      (function(d, s) {
-          var j, e = d.getElementsByTagName(s)[0];
-          if (typeof LivereTower === 'function') { return; }
-          j = d.createElement(s);
-          j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
-          j.async = true;
-          e.parentNode.insertBefore(j, e);
-      })(document, 'script');
-    }
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom && ($dom.innerHTML= result)
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
   }
 
-  if (isShuoshuo) {
-    'Twikoo' === 'Livere'
-      ? window.shuoshuoComment = { loadComment: loadLivere }
-      : window.loadOtherComment = loadLivere
-    return
-  }
-
-  if ('Twikoo' === 'Livere' || !false) {
-    if (false) btf.loadComment(document.getElementById('lv-container'), loadLivere)
-    else loadLivere()
-  } else {
-    window.loadOtherComment = loadLivere
-  }
-})()</script></div><div class="aplayer no-destroy" data-id="12875524711" data-server="netease" data-type="playlist" data-fixed="true" data-mini="true" data-volume="0.4" data-order="random" data-autoplay="true"> </div><script id="canvas_nest" defer="defer" color="97,255,145" opacity="0.7" zIndex="-1" count="88" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-nest.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = false;
-POWERMODE.shake = false;
-POWERMODE.mobile = false;
-document.body.addEventListener('input', POWERMODE);
-</script><script>(() => {
-  window.$crisp = ['safe', true]
-  window.CRISP_WEBSITE_ID = "b178ba69-5256-414b-adab-10306c2edf59"
-
-  btf.getScript('https://client.crisp.chat/l.js').then(() => {
-    const isChatBtn = true
-    const isChatHideShow = true
-
-    if (isChatBtn) {
-      const open = () => {
-        $crisp.push(["do", "chat:show"])
-        $crisp.push(["do", "chat:open"])
-      }
-
-      const close = () => $crisp.push(["do", "chat:hide"])
-
-      close()
-
-      $crisp.push(["on", "chat:closed", close])
-
-      window.chatBtnFn = () => $crisp.is("chat:visible") ? close() : open()
-
-      document.getElementById('chat-btn').style.display = 'block'
-    } else if (isChatHideShow) {
-      window.chatBtn = {
-        hide: () => $crisp.push(["do", "chat:hide"]),
-        show: () => $crisp.push(["do", "chat:show"])
-      }
-    }
-  })
-})()</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script>(() => {
-  const destroyAplayer = () => {
-    if (window.aplayers) {
-      for (let i = 0; i < window.aplayers.length; i++) {
-        if (!window.aplayers[i].options.fixed) {
-          window.aplayers[i].destroy()
-        }
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
       }
     }
   }
 
-  const runMetingJS = () => {
-    typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
-  }
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><script>var visitorMail = "visitor@ming.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><script src="/js/anzhiyu/right_click_menu.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["meta[property=\"og:image\"]","meta[property=\"og:title\"]","meta[property=\"og:url\"]","meta[property=\"og:type\"]","meta[property=\"og:site_name\"]","meta[property=\"og:description\"]","head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"]):not([href="/music/"]):not([href="/no-pjax/"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
 
-  btf.addGlobalFn('pjaxSend', destroyAplayer, 'destroyAplayer')
-  btf.addGlobalFn('pjaxComplete', loadMeting, 'runMetingJS')
-})()</script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>(() => {
-  const pjaxSelectors = ["meta[property=\"og:image\"]","meta[property=\"og:title\"]","meta[property=\"og:url\"]","meta[property=\"og:description\"]","link[rel=\"canonical\"]","head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
 
-  window.pjax = new Pjax({
-    elements: 'a:not([target="_blank"])',
-    selectors: pjaxSelectors,
-    cacheBust: false,
-    analytics: false,
-    scrollRestoration: false
-  })
-
-  const triggerPjaxFn = (val) => {
-    if (!val) return
-    Object.values(val).forEach(fn => fn())
-  }
-
-  document.addEventListener('pjax:send', () => {
-    // removeEventListener
-    btf.removeGlobalFnEvent('pjaxSendOnce')
-    btf.removeGlobalFnEvent('themeChange')
-
-    // reset readmode
-    const $bodyClassList = document.body.classList
-    if ($bodyClassList.contains('read-mode')) $bodyClassList.remove('read-mode')
-
-    triggerPjaxFn(window.globalFn.pjaxSend)
-  })
-
-  document.addEventListener('pjax:complete', () => {
-    btf.removeGlobalFnEvent('pjaxCompleteOnce')
-    document.querySelectorAll('script[data-pjax]').forEach(item => {
-      const newScript = document.createElement('script')
-      const content = item.text || item.textContent || item.innerHTML || ""
-      Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
-      newScript.appendChild(document.createTextNode(content))
-      item.parentNode.replaceChild(newScript, item)
-    })
-
-    triggerPjaxFn(window.globalFn.pjaxComplete)
-  })
-
-  document.addEventListener('pjax:error', e => {
-    if (e.request.status === 404) {
-      const usePjax = true
-      false 
-        ? (usePjax ? pjax.loadUrl('/404.html') : window.location.href = '/404.html')
-        : window.location.href = e.request.responseURL
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
     }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
   })
-})()</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>
